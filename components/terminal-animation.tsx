@@ -4,11 +4,11 @@ import { useEffect, useState } from "react"
 
 const terminalLines = [
   { type: "command", text: "$ whoami" },
-  { type: "output", text: "younes - full-stack developer" },
+  { type: "output", text: "YOUNES - Full-Stack Developer" },
   { type: "command", text: "$ cat skills.txt" },
   { type: "output", text: "→ TypeScript, React, Next.js" },
-  { type: "output", text: "→ Node.js, Python, Go" },
-  { type: "output", text: "→ Docker, Kubernetes, CI/CD" },
+  { type: "output", text: "→ Node.js, Python" },
+  { type: "output", text: "→ Terminal, Git, Unix" },
   { type: "output", text: "→ Linux, Nginx, PostgreSQL" },
   { type: "command", text: "$ ./deploy.sh --production" },
   { type: "output", text: "[✓] Building application..." },

@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import DotGridShader from "@/components/DotGridShader"
+import LiveClock from "@/components/live-clock"
 
 import AnimatedHeading from "@/components/animated-heading"
 import RevealOnView from "@/components/reveal-on-view"
@@ -30,15 +31,18 @@ export default function Page() {
               </div>
               <div>
                 {/* Wordmark */}
-                <div className="mb-8 flex items-center gap-2">
-                  <div className="text-2xl font-extrabold tracking-tight">YOUNES</div>
-                  <div className="relative">
-                    <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" aria-hidden="true" />
-                    <div
-                      className="absolute inset-0 h-2.5 w-2.5 animate-ping rounded-full bg-emerald-500 opacity-75"
-                      aria-hidden="true"
-                    />
+                <div className="mb-8 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="text-2xl font-extrabold tracking-tight">YOUNES</div>
+                    <div className="relative">
+                      <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" aria-hidden="true" />
+                      <div
+                        className="absolute inset-0 h-2.5 w-2.5 animate-ping rounded-full bg-emerald-500 opacity-75"
+                        aria-hidden="true"
+                      />
+                    </div>
                   </div>
+                  <LiveClock timeZone="Africa/Casablanca" className="text-xs text-white/50" />
                 </div>
 
                 {/* Headline with intro blur effect */}

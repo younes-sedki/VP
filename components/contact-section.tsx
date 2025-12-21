@@ -1,7 +1,9 @@
 "use client"
 
 import { Github, Gitlab, Mail, Linkedin } from "lucide-react"
+import { useEffect, useState } from "react"
 import RevealOnView from "@/components/reveal-on-view"
+import DotGridShader from "@/components/DotGridShader"
 import { Button } from "@/components/ui/button"
 
 const contactLinks = [
@@ -28,6 +30,12 @@ const contactLinks = [
 ]
 
 export default function ContactSection() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <section className="px-4 py-16 lg:py-24">
       <div className="mx-auto max-w-6xl">
@@ -38,18 +46,13 @@ export default function ContactSection() {
           </p>
         </RevealOnView>
 
-        <RevealOnView as="div" intensity="soft" className="relative overflow-hidden rounded-3xl border border-white/10">
-          {/* Gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-neutral-900 via-neutral-900/95 to-emerald-950/40" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-500/10 via-transparent to-transparent" />
-
-          {/* Grid pattern overlay */}
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23ffffff' fillOpacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2H6zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-          />
+        <RevealOnView as="div" intensity="soft" className="relative overflow-hidden rounded-3xl border border-white/10 bg-black">
+          {/* Texture background with dots */}
+          {mounted && (
+            <div className="pointer-events-none absolute inset-0 opacity-5 mix-blend-soft-light">
+              <DotGridShader />
+            </div>
+          )}
 
           <div className="relative z-10 p-8 sm:p-12">
             <div className="mb-10">
@@ -89,6 +92,17 @@ export default function ContactSection() {
             {/* CTA Button */}
           </div>
         </RevealOnView>
+
+        {/* Footer */}
+        <div className="mt-12 border-t border-white/10 pt-8">
+          <RevealOnView as="div" intensity="soft">
+            <div className="flex items-center justify-center">
+              <p className="text-sm text-white/60">
+                © 2025 YOUNES SEDKI
+              </p>
+            </div>
+          </RevealOnView>
+        </div>
       </div>
     </section>
   )

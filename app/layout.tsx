@@ -29,7 +29,7 @@ export default function RootLayout({
 html { font-family: var(--font-sans); }
         `}</style>
       </head>
-      <body>{children}</body>
+      <body suppressHydrationWarning>{children}</body>
     </html>
   )
 }

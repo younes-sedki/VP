@@ -56,7 +56,7 @@ export default function Page() {
                 {/* CTAs */}
                 <div className="mt-6 flex flex-wrap items-center gap-3">
                   <Button asChild size="lg" className="rounded-full">
-                    <Link href="mailto:younes@portfolio.dev">
+                    <Link href="mailto:younes_sedki@hotmail.fr">
                       DM ME
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>

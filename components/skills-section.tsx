@@ -14,7 +14,7 @@ const skillCategories = [
   },
   {
     category: "Tools",
-    skills: ["Servers", "Git", "Vercel", "Linux & Terminal","Ai Agents"],
+    skills: ["Git", "Vercel", "Linux & Terminal"],
   },
 ]
 

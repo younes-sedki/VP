@@ -48,7 +48,8 @@ export default function Page() {
                 />
 
                 <p className="mt-4 max-w-[42ch] text-lg text-white/70 tabular-nums">
-                  Full-Stack Developer with a strong interest in infrastructure, DevOps, and security. Continuously
+                I&apos;m a second-year student at the Institut Spécialisé de Technologie Appliquée de Hay Riad, Rabat (ISTA).
+                I&apos;m a Full-Stack Developer with a strong interest in infrastructure, DevOps, and security. Continuously
                   learning and improving through hands-on projects and practical experiments.
                 </p>
 

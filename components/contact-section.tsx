@@ -55,12 +55,11 @@ export default function ContactSection() {
             <div className="mb-10">
               <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-sm text-emerald-400 mb-4">
                 <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                Available for opportunities
+                Available for a 1-Month Internship
               </div>
               <h3 className="mb-3 text-2xl font-bold">Get in Touch</h3>
               <p className="text-white/60 max-w-lg leading-relaxed">
-                I&apos;m always open to discussing new projects, creative ideas, or opportunities to be part of your
-                vision. Whether it&apos;s about DevOps, infrastructure, or full-stack development, let&apos;s talk.
+              I&apos;am currently looking for a 1-month internship (stage) to learn, contribute where possible, and gain practical experience in web development and infrastructure fundamentals.             
               </p>
             </div>
 

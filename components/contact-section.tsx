@@ -23,7 +23,7 @@ const contactLinks = [
   {
     name: "LinkedIn",
     icon: Linkedin,
-    href: "https://linkedin.com/younes-sedki",
+    href: "https://www.linkedin.com/in/younes-sedki",
   },
 ]
 

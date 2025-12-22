@@ -72,7 +72,7 @@ export default function Page() {
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button
+                  {/* <Button
                     asChild
                     size="lg"
                     variant="outline"
@@ -82,7 +82,7 @@ export default function Page() {
                       <Download className="mr-2 h-4 w-4" />
                       Resume
                     </a>
-                  </Button>
+                  </Button> */}       
                 </div>
               </div>
             </RevealOnView>

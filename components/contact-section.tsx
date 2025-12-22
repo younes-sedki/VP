@@ -75,14 +75,13 @@ export default function ContactSection() {
                     href={link.href}
                     target={link.href.startsWith("mailto") ? undefined : "_blank"}
                     rel={link.href.startsWith("mailto") ? undefined : "noopener noreferrer"}
-                    className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 p-4 transition-all duration-300 hover:border-white/20 hover:scale-[1.02]"
+                    className="group flex items-center gap-4 rounded-2xl bg-white/5 hover:bg-white/10 p-4 transition-all duration-300 hover:scale-[1.02]"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-white group-hover:bg-white/15 transition-colors">
+                    <div className="flex h-12 w-12 items-center justify-center text-white transition-colors">
                       <Icon className="h-6 w-6" />
                     </div>
                     <div>
                       <span className="block text-sm font-semibold text-white">{link.name}</span>
-                      <span className="text-xs text-white/50">Connect with me</span>
                     </div>
                   </a>
                 )

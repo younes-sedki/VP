@@ -33,7 +33,6 @@ export default function RevealOnView({
     const startBlur = intensity === "hero" ? 16 : 10
     const startScale = intensity === "hero" ? 0.965 : 0.98
 
-    // For staggerChildren, don't hide the parent but setup children
     if (staggerChildren) {
       element.style.opacity = "1"
       element.style.transform = "none"

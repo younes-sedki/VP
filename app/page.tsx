@@ -1,15 +1,25 @@
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Download } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import DotGridShader from "@/components/DotGridShader"
-import LiveClock from "@/components/live-clock"
 
 import AnimatedHeading from "@/components/animated-heading"
 import RevealOnView from "@/components/reveal-on-view"
 import SkillsSection from "@/components/skills-section"
 import ContactSection from "@/components/contact-section"
 import TerminalAnimation from "@/components/terminal-animation"
+import ProjectsSection from "@/components/projects-section"
+
+// ===========================================
+// SECTION VISIBILITY CONFIG
+// Set to false to hide a section
+// ===========================================
+const SHOW_SECTIONS = {
+  projects: false, // Set to false to hide Projects
+  skills: true, // Set to false to hide Skills
+  contact: true, // Set to false to hide Contact
+}
 
 export default function Page() {
   return (
@@ -30,7 +40,6 @@ export default function Page() {
                 <DotGridShader />
               </div>
               <div>
-                {/* Wordmark */}
                 <div className="mb-8 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <div className="text-2xl font-extrabold tracking-tight">YOUNES</div>
@@ -42,7 +51,6 @@ export default function Page() {
                       />
                     </div>
                   </div>
-                  <LiveClock timeZone="Africa/Casablanca" className="text-xs text-white/50" />
                 </div>
 
                 {/* Headline with intro blur effect */}
@@ -52,18 +60,28 @@ export default function Page() {
                 />
 
                 <p className="mt-4 max-w-[42ch] text-lg text-white/70 tabular-nums">
-                I&apos;m a second-year student at the Institut Spécialisé de Technologie Appliquée de Hay Riad, Rabat (ISTA).
-                I&apos;m a Full-Stack Developer with a strong interest in infrastructure, DevOps, and security. Continuously
-                  learning and improving through hands-on projects and practical experiments.
+                  I&apos;m a second-year student at the Institut Spécialisé de Technologie Appliquée de Hay Riad, Rabat
+                  (ISTA). I&apos;m a Full-Stack Developer with a strong interest in infrastructure, DevOps, and
+                  security. Continuously learning and improving through hands-on projects and practical experiments.
                 </p>
 
-                {/* CTAs */}
                 <div className="mt-6 flex flex-wrap items-center gap-3">
                   <Button asChild size="lg" className="rounded-full">
                     <Link href="mailto:younes_sedki@hotmail.fr">
                       DM ME
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="rounded-full border-white/20 bg-transparent hover:bg-white/10"
+                  >
+                    <a href="/resume.pdf" download>
+                      <Download className="mr-2 h-4 w-4" />
+                      Resume
+                    </a>
                   </Button>
                 </div>
               </div>
@@ -78,8 +96,9 @@ export default function Page() {
         </div>
       </section>
 
-      <SkillsSection />
-      <ContactSection />
+      {SHOW_SECTIONS.projects && <ProjectsSection />}
+      {SHOW_SECTIONS.skills && <SkillsSection />}
+      {SHOW_SECTIONS.contact && <ContactSection />}
     </main>
   )
 }

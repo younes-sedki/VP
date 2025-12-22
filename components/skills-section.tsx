@@ -5,16 +5,16 @@ import DotGridShader from "@/components/DotGridShader"
 
 const skillCategories = [
   {
-    category: "Design",
-    skills: ["UI/UX Design", "Figma", "Design Systems", "Accessibility"],
+    category: "Frontend",
+    skills: ["React", "Next.js", "TypeScript", "Tailwind CSS"],
   },
   {
-    category: "Frontend",
-    skills: ["React", "TypeScript", "Tailwind CSS", "Next.js"],
+    category: "Backend",
+    skills: ["Node.js", "Express", "REST APIs", "Authentication (JWT)"],
   },
   {
     category: "Tools",
-    skills: ["Git", "Vercel", "Linux & Terminal"],
+    skills: ["Git", "Linux & Terminal", "Vercel", "Databases (SQL / NoSQL)"],
   },
 ]
 

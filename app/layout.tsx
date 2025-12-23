@@ -1,21 +1,22 @@
-import type { Metadata } from 'next'
-import './globals.css'
+import type { Metadata } from "next"
+import Script from "next/script"
+import "./globals.css"
 
 export const metadata: Metadata = {
-  title: 'Younes SEDKI',
-  description: 'Full-stack developer portfolio',
-  generator: 'sedkiy.dev',
+  title: "Younes SEDKI",
+  description: "Full-stack developer portfolio",
+  generator: "sedkiy.dev",
 
   icons: {
     icon: [
-      { url: '/favicon.ico' },
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: "/favicon.ico" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
     ],
-    apple: '/apple-touch-icon.png',
+    apple: "/apple-touch-icon.png",
   },
 
-  manifest: '/site.webmanifest',
+  manifest: "/site.webmanifest",
 }
 
 export default function RootLayout({
@@ -26,6 +27,23 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* ================= Google Analytics ================= */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-5HFB8EHCJP"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-5HFB8EHCJP', {
+              page_path: window.location.pathname,
+            });
+          `}
+        </Script>
+        {/* ==================================================== */}
+
         {/* Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -48,11 +66,13 @@ export default function RootLayout({
               Menlo, Monaco, Consolas, "Liberation Mono",
               "Courier New", monospace;
           }
+
           html {
             font-family: var(--font-sans);
           }
         `}</style>
       </head>
+
       <body>{children}</body>
     </html>
   )

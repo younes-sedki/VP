@@ -32,38 +32,69 @@ export default function ContactSection() {
     <section className="px-4 py-16 lg:py-24">
       <div className="mx-auto max-w-6xl">
         <RevealOnView as="div" intensity="soft" className="mb-12">
-          <h2 className="text-3xl font-black tracking-tight sm:text-4xl">Let&apos;s Connect</h2>
+          <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
+            Let&apos;s Connect
+          </h2>
           <p className="mt-3 max-w-2xl text-lg text-white/60">
-            Reach out through any of these channels. I&apos;m always interested in new projects and collaborations.
+            English & French — choose what fits you best.
           </p>
         </RevealOnView>
 
         <RevealOnView
           as="div"
           intensity="hero"
-          className="relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/60 p-6 sm:p-8"
-          staggerChildren
+          className="relative overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/60 p-6 sm:p-8"
         >
-          {/* Texture background - same as hero card */}
+          {/* Texture background */}
           <div className="pointer-events-none absolute inset-0 opacity-5 mix-blend-soft-light">
             <DotGridShader />
           </div>
 
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-sm text-emerald-400 mb-4">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              Available for a 1-Month Internship
+          <div className="relative z-10 grid gap-10 lg:grid-cols-2">
+            {/* EN */}
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400 mb-4">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                1-Month Internship — 23/02/2026 to 22/03/2026
+              </div>
+
+              <h3 className="text-xl font-bold mb-3">
+                Internship Availability
+              </h3>
+
+              <p className="max-w-lg text-white/60 leading-relaxed mb-8 text-sm">
+                I am seeking a 1-month internship (stage) scheduled from
+                <span className="text-white"> 23 February 2026 </span>
+                to
+                <span className="text-white"> 22 March 2026</span>.
+                This internship will allow me to apply my academic knowledge
+                and gain practical experience in a professional environment.
+              </p>
             </div>
 
-            <h3 className="text-2xl font-bold mb-3">Get in Touch</h3>
+            {/* FR */}
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1 text-xs text-blue-400 mb-4">
+                <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
+                Stage d’un mois — 23/02/2026 au 22/03/2026
+              </div>
 
-            <p className="max-w-lg text-white/60 leading-relaxed mb-10">
-              I&apos;m currently looking for a 1-month internship (stage) to learn, contribute where possible, and gain
-              practical experience in web development and infrastructure fundamentals.
-            </p>
+              <h3 className="text-xl font-bold mb-3">
+                Disponibilité pour un stage
+              </h3>
 
-            {/* Contact links - clean style */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <p className="max-w-lg text-white/60 leading-relaxed mb-8 text-sm">
+                Je suis à la recherche d’un stage d’un mois prévu du
+                <span className="text-white"> 23 février 2026 </span>
+                au
+                <span className="text-white"> 22 mars 2026</span>.
+                Ce stage me permettra de mettre en pratique mes connaissances
+                dans un cadre professionnel.
+              </p>
+            </div>
+
+            {/* SMALL CONTACT LINKS */}
+            <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
               {contactLinks.map((link) => {
                 const Icon = link.icon
                 return (
@@ -72,14 +103,14 @@ export default function ContactSection() {
                     href={link.href}
                     target={link.href.startsWith("mailto") ? undefined : "_blank"}
                     rel={link.href.startsWith("mailto") ? undefined : "noopener noreferrer"}
-                    className="group flex items-center gap-4 rounded-2xl bg-white/5 hover:bg-white/10 p-4 transition-all duration-300 hover:scale-[1.02]"
+                    className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2 transition-colors hover:bg-white/10"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center text-white transition-colors">
-                      <Icon className="h-6 w-6" />
+                    <div className="flex h-9 w-9 items-center justify-center text-white">
+                      <Icon className="h-4 w-4" />
                     </div>
-                    <div>
-                      <span className="block text-sm font-semibold text-white">{link.name}</span>
-                    </div>
+                    <span className="text-sm font-medium text-white">
+                      {link.name}
+                    </span>
                   </a>
                 )
               })}
@@ -90,7 +121,9 @@ export default function ContactSection() {
         <div className="mt-12 border-t border-white/10 pt-8">
           <RevealOnView as="div" intensity="soft">
             <div className="flex items-center justify-center">
-              <p className="text-sm text-white/60">© 2025 YOUNES SEDKI</p>
+              <p className="text-sm text-white/60">
+                © 2025 YOUNES SEDKI
+              </p>
             </div>
           </RevealOnView>
         </div>

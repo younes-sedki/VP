@@ -88,7 +88,8 @@ export default function Page() {
             </RevealOnView>
           </aside>
 
-          <div className="lg:sticky lg:top-4 lg:h-[calc(100svh-2rem)]">
+          {/* Terminal container with fixed height on mobile to prevent layout shifts */}
+          <div className="h-[520px] sm:h-[700px] lg:sticky lg:top-4 lg:h-[calc(100svh-2rem)]">
             <RevealOnView as="div" intensity="hero" delay={0.2} className="h-full">
               <TerminalAnimation />
             </RevealOnView>

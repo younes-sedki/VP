@@ -30,10 +30,10 @@ const projects = [
 
 export default function ProjectsSection() {
   return (
-    <section className="px-4 py-16">
+    <section className="px-4 py-16" aria-labelledby="projects-heading">
       <RevealOnView as="div" intensity="medium" className="mb-8">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold tracking-tight">PROJECTS</h2>
+          <h2 id="projects-heading" className="text-2xl font-bold tracking-tight">PROJECTS</h2>
           <div className="relative">
             <div className="h-2 w-2 rounded-full bg-emerald-500" />
             <div className="absolute inset-0 h-2 w-2 animate-ping rounded-full bg-emerald-500 opacity-75" />
@@ -45,7 +45,7 @@ export default function ProjectsSection() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((project, index) => (
           <RevealOnView key={project.title} as="div" intensity="medium" delay={index * 0.1}>
-            <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/60 p-6 transition-all hover:border-white/20">
+            <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border-2 border-white/20 bg-neutral-900/60 p-6 transition-all hover:border-white/30">
               {/* Texture background */}
               <div className="pointer-events-none absolute inset-0 opacity-5 mix-blend-soft-light">
                 <DotGridShader />
@@ -59,17 +59,19 @@ export default function ProjectsSection() {
                       href={project.github}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-white/50 transition-colors hover:text-white"
+                      className="text-white/50 transition-colors hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-emerald-500 rounded"
+                      aria-label={`View ${project.title} on GitHub`}
                     >
-                      <Github className="h-5 w-5" />
+                      <Github className="h-5 w-5" aria-hidden="true" />
                     </a>
                     <a
                       href={project.live}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-white/50 transition-colors hover:text-white"
+                      className="text-white/50 transition-colors hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-emerald-500 rounded"
+                      aria-label={`View ${project.title} live demo`}
                     >
-                      <ExternalLink className="h-5 w-5" />
+                      <ExternalLink className="h-5 w-5" aria-hidden="true" />
                     </a>
                   </div>
                 </div>

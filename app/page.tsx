@@ -23,16 +23,21 @@ const SHOW_SECTIONS = {
 
 export default function Page() {
   return (
-    <main className="bg-neutral-950 text-white">
+    <main className="bg-neutral-950 text-white" id="main-content">
+      {/* Skip to content link for accessibility */}
+      <a href="#main-content" className="skip-to-content">
+        Skip to main content
+      </a>
+      
       {/* HERO: full-viewport section */}
-      <section className="px-4 pt-4 pb-16 lg:pb-4">
+      <section className="px-4 pt-4 pb-16 lg:pb-4" aria-label="Hero section">
         <div className="grid h-full grid-cols-1 gap-4 lg:grid-cols-[420px_1fr]">
           {/* LEFT: sticky and full height */}
           <aside className="lg:sticky lg:top-4 lg:h-[calc(100svh-2rem)]">
             <RevealOnView
               as="div"
               intensity="hero"
-              className="relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/60 p-6 sm:p-8"
+              className="relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border-2 border-white/20 bg-neutral-900/60 p-6 sm:p-8"
               staggerChildren
             >
               {/* Texture background */}
@@ -67,9 +72,9 @@ export default function Page() {
 
                 <div className="mt-6 flex flex-wrap items-center gap-3">
                   <Button asChild size="lg" className="rounded-full">
-                    <Link href="mailto:younes_sedki@hotmail.fr">
+                    <Link href="mailto:younes_sedki@hotmail.fr" aria-label="Send email to Younes Sedki">
                       DM ME
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                     </Link>
                   </Button>
                   {/* <Button

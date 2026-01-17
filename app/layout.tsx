@@ -1,12 +1,76 @@
 import type { Metadata } from "next"
 import Script from "next/script"
 import "./globals.css"
+import StructuredData from "./structured-data"
 
 export const metadata: Metadata = {
-  title: "Younes SEDKI",
-  description: "Full-stack developer portfolio",
-  generator: "sedkiy.dev",
-
+  title: {
+    default: "Younes SEDKI - Full-Stack Developer & DevOps Engineer",
+    template: "%s | Younes SEDKI",
+  },
+  description: "Full-Stack Developer specializing in React, Next.js, Node.js, and DevOps. Second-year student at ISTA Rabat seeking internship opportunities. Building scalable web applications with modern technologies.",
+  keywords: [
+    "Full-Stack Developer",
+    "React Developer",
+    "Next.js Developer",
+    "Node.js Developer",
+    "DevOps Engineer",
+    "Web Developer Morocco",
+    "Rabat Developer",
+    "ISTA Student",
+    "TypeScript Developer",
+    "Laravel Developer",
+    "Portfolio",
+  ],
+  authors: [{ name: "Younes SEDKI" }],
+  creator: "Younes SEDKI",
+  publisher: "Younes SEDKI",
+  generator: "Next.js",
+  applicationName: "Younes SEDKI Portfolio",
+  referrer: "origin-when-cross-origin",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL("https://sedkiy.dev"), // Update with your actual domain
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://sedkiy.dev", // Update with your actual domain
+    siteName: "Younes SEDKI Portfolio",
+    title: "Younes SEDKI - Full-Stack Developer & DevOps Engineer",
+    description: "Full-Stack Developer specializing in React, Next.js, Node.js, and DevOps. Building scalable web applications with modern technologies.",
+    images: [
+      {
+        url: "/og-image.png", // Create this image (1200x630px)
+        width: 1200,
+        height: 630,
+        alt: "Younes SEDKI - Full-Stack Developer",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Younes SEDKI - Full-Stack Developer & DevOps Engineer",
+    description: "Full-Stack Developer specializing in React, Next.js, Node.js, and DevOps.",
+    images: ["/og-image.png"], // Same image as Open Graph
+    creator: "@younes_sedki", // Update with your Twitter handle if you have one
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -15,8 +79,8 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-touch-icon.png",
   },
-
   manifest: "/site.webmanifest",
+  category: "technology",
 }
 
 export default function RootLayout({
@@ -27,6 +91,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* ================= Structured Data for SEO ================= */}
+        <StructuredData />
         {/* ================= Google Analytics ================= */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-5HFB8EHCJP"

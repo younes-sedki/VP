@@ -91,6 +91,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* ================= iOS Safari Safe Area ================= */}
+        <meta name="theme-color" content="#030712" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        {/* ==================================================== */}
         {/* ================= Structured Data for SEO ================= */}
         <StructuredData />
         {/* ================= Google Analytics ================= */}
@@ -139,7 +145,7 @@ export default function RootLayout({
         `}</style>
       </head>
 
-      <body>{children}</body>
+      <body className="bg-neutral-950">{children}</body>
     </html>
   )
 }

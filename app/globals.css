@@ -120,10 +120,20 @@
   
   html {
     scroll-behavior: smooth;
+    background-color: #030712; /* neutral-950 */
   }
   
   body {
     @apply bg-background text-foreground;
+    background-color: #030712; /* neutral-950 fallback */
+  }
+  
+  /* iOS Safari safe area handling */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
   }
   
   /* Improved focus indicators for accessibility */

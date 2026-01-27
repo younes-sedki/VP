@@ -35,9 +35,6 @@ export default function ContactSection() {
           <h2 id="contact-heading" className="text-3xl font-black tracking-tight sm:text-4xl">
             Let&apos;s Connect
           </h2>
-          <p className="mt-3 max-w-2xl text-lg text-white/60">
-            English & French — choose what fits you best.
-          </p>
         </RevealOnView>
 
         <RevealOnView
@@ -51,47 +48,6 @@ export default function ContactSection() {
           </div>
 
           <div className="relative z-10 grid gap-10 lg:grid-cols-2">
-            {/* EN */}
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs text-emerald-400 mb-4">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                1-Month Internship — 23/02/2026 to 22/03/2026
-              </div>
-
-              <h3 className="text-xl font-bold mb-3">
-                Internship Availability
-              </h3>
-
-              <p className="max-w-lg text-white/60 leading-relaxed mb-8 text-sm">
-                I am seeking a 1-month internship (stage) scheduled from
-                <span className="text-white"> 23 February 2026 </span>
-                to
-                <span className="text-white"> 22 March 2026</span>.
-                This internship will allow me to apply my academic knowledge
-                and gain practical experience in a professional environment.
-              </p>
-            </div>
-
-            {/* FR */}
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs text-blue-400 mb-4">
-                <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
-                Stage d&apos;un mois — 23/02/2026 au 22/03/2026
-              </div>
-
-              <h3 className="text-xl font-bold mb-3">
-                Disponibilité pour un stage
-              </h3>
-
-              <p className="max-w-lg text-white/60 leading-relaxed mb-8 text-sm">
-                Je suis à la recherche d&apos;un stage d&apos;un mois prévu du
-                <span className="text-white"> 23 février 2026 </span>
-                au
-                <span className="text-white"> 22 mars 2026</span>.
-                Ce stage me permettra de mettre en pratique mes connaissances
-                dans un cadre professionnel.
-              </p>
-            </div>
 
             {/* SMALL CONTACT LINKS */}
             <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-3" role="list">
@@ -103,14 +59,14 @@ export default function ContactSection() {
                     href={link.href}
                     target={link.href.startsWith("mailto") ? undefined : "_blank"}
                     rel={link.href.startsWith("mailto") ? undefined : "noopener noreferrer"}
-                    className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2 transition-colors hover:bg-white/10 focus:outline-2 focus:outline-offset-2 focus:outline-emerald-500"
+                    className="flex flex-col items-center justify-center gap-2 rounded-xl bg-white/5 px-3 py-2 transition-all duration-300 hover:scale-105 hover:shadow-lg focus:outline-2 focus:outline-offset-2 focus:outline-emerald-500"
                     aria-label={`${link.name} - ${link.href.startsWith("mailto") ? "Send email" : "Open in new tab"}`}
                     role="listitem"
                   >
-                    <div className="flex h-9 w-9 items-center justify-center text-white" aria-hidden="true">
+                    <div className="flex h-5 w-5 items-center justify-center text-white" aria-hidden="true">
                       <Icon className="h-4 w-4" />
                     </div>
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-xs font-medium text-white text-center sm:text-sm">
                       {link.name}
                     </span>
                   </a>

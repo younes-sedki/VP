@@ -75,6 +75,12 @@ export default function Page() {
                       <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                     </Link>
                   </Button>
+                  <Button asChild size="lg" variant="outline" className="rounded-full border-emerald-500/50 bg-transparent hover:bg-emerald-500/10 hover:border-emerald-500 text-emerald-400">
+                    <Link href="/blog" aria-label="Read blog posts">
+                      Blog
+                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                    </Link>
+                  </Button>
                   {/* <Button
                     asChild
                     size="lg"

@@ -1,0 +1,17 @@
+{
+  "adminTweets": [
+    {
+      "id": "1",
+      "author": "Younes SEDKI",
+      "handle": "younes_dev",
+      "avatar": "admin",
+      "avatarImage": null,
+      "content": "🚀 Just launched a major portfolio update with real-time blog integration!\n\nKey features:\n• Live tweet-style blog posts with instant updates\n• Real-time content management system\n• Optimized performance with Next.js 15\n• Fully responsive design with mobile-first approach\n• Dark theme implementation with cross-browser compatibility\n\nBuilt modern web architecture from scratch. Check out the live implementation!",
+      "image": "",
+      "created_at": "2026-01-30T01:45:00.000Z",
+      "likes": 5,
+      "updatedAt": "2026-01-30T01:45:00.000Z"
+    }
+  ],
+  "adminReplies": []
+}

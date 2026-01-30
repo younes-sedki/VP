@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Script from "next/script"
 import "./globals.css"
 import StructuredData from "./structured-data"
+import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
   title: {
@@ -145,7 +146,10 @@ export default function RootLayout({
         `}</style>
       </head>
 
-      <body className="bg-neutral-950">{children}</body>
+      <body className="bg-neutral-950">
+        {children}
+        <Toaster />
+      </body>
     </html>
   )
 }

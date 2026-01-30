@@ -1,5 +1,8 @@
+"use client"
+
 import Link from "next/link"
 import { ArrowRight, Download } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 import { Button } from "@/components/ui/button"
 import DotGridShader from "@/components/DotGridShader"
@@ -69,23 +72,67 @@ export default function Page() {
                 </p>
 
                 <div className="mt-6 flex flex-wrap items-center gap-3">
-                  <Button asChild size="lg" className="rounded-full">
-                    <Link href="mailto:younes_sedki@hotmail.fr" aria-label="Send email to Younes Sedki">
-                      DM ME
-                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                    </Link>
-                  </Button>
-                  {/* <Button
-                    asChild
-                    size="lg"
-                    variant="outline"
-                    className="rounded-full border-white/20 bg-transparent hover:bg-white/10"
-                  >
-                    <a href="/resume.pdf" download>
-                      <Download className="mr-2 h-4 w-4" />
-                      Resume
-                    </a>
-                  </Button> */}       
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        size="lg" 
+                        className="rounded-full"
+                        onClick={() => {
+                          window.location.href = 'mailto:younes_sedki@hotmail.fr'
+                        }}
+                        aria-label="Send email to Younes Sedki"
+                      >
+                        DM ME
+                        <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10">
+                      Send me an email
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        size="lg" 
+                        variant="outline" 
+                        className="rounded-full border-emerald-500/50 bg-transparent hover:bg-emerald-500/10 hover:border-emerald-500 text-emerald-400"
+                        onClick={() => {
+                          window.location.href = '/blog'
+                        }}
+                        aria-label="Read blog posts"
+                      >
+                        Blog
+                        <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10">
+                      Read my blog posts
+                    </TooltipContent>
+                  </Tooltip>
+                  {/* <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="rounded-full border-white/20 bg-transparent hover:bg-white/10"
+                        onClick={() => {
+                          const link = document.createElement('a')
+                          link.href = '/resume.pdf'
+                          link.download = 'resume.pdf'
+                          document.body.appendChild(link)
+                          link.click()
+                          document.body.removeChild(link)
+                        }}
+                        aria-label="Download resume"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Resume
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10">
+                      Download my resume
+                    </TooltipContent>
+                  </Tooltip>        */}
                 </div>
               </div>
             </RevealOnView>

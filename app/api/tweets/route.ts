@@ -1,0 +1,632 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { promises as fs } from 'fs'
+import path from 'path'
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit'
+import { sanitizeInput, validateTweetContent, validateCommentContent, validateEmailFormat } from '@/lib/validation'
+import { TWEET_CONFIG } from '@/lib/config'
+
+export async function GET(request: NextRequest) {
+  // Rate limiting
+  const clientId = getClientIdentifier(request)
+  const rateLimit = checkRateLimit(clientId, RATE_LIMITS.default)
+  
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': RATE_LIMITS.default.max.toString(),
+          'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+          'X-RateLimit-Reset': rateLimit.resetTime.toString(),
+          'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString(),
+        }
+      }
+    )
+  }
+
+  try {
+    const searchParams = request.nextUrl.searchParams
+    // Sanitize and validate limit/offset
+    const limitParam = searchParams.get('limit')
+    const offsetParam = searchParams.get('offset')
+    
+    const limit = limitParam && !isNaN(parseInt(limitParam)) 
+      ? Math.min(Math.max(parseInt(limitParam), 1), 100) // Clamp between 1-100
+      : 50
+    const offset = offsetParam && !isNaN(parseInt(offsetParam))
+      ? Math.max(parseInt(offsetParam), 0) // Must be >= 0
+      : 0
+
+    // Read both admin and user tweets
+    const adminPath = path.join(process.cwd(), 'public', 'admin-tweets.json')
+    const userPath = path.join(process.cwd(), 'public', 'user-tweets.json')
+
+    const [adminContent, userContent] = await Promise.all([
+      fs.readFile(adminPath, 'utf-8').catch((err) => {
+        console.error('Error reading admin-tweets.json:', err)
+        return JSON.stringify({ adminTweets: [], adminReplies: [] })
+      }),
+      fs.readFile(userPath, 'utf-8').catch((err) => {
+        console.error('Error reading user-tweets.json:', err)
+        return '[]'
+      })
+    ])
+
+    let adminData: any = { adminTweets: [], adminReplies: [] }
+    let userTweets = []
+    
+    try {
+      const parsed = JSON.parse(adminContent)
+      // Handle backward compatibility: if it's an array, wrap it
+      if (Array.isArray(parsed)) {
+        adminData = { adminTweets: parsed, adminReplies: [] }
+      } else {
+        adminData = parsed
+      }
+    } catch (err) {
+      console.error('Error parsing admin-tweets.json:', err)
+      adminData = { adminTweets: [], adminReplies: [] }
+    }
+    
+    try {
+      userTweets = JSON.parse(userContent)
+    } catch (err) {
+      console.error('Error parsing user-tweets.json:', err)
+      userTweets = []
+    }
+
+    // Extract admin tweets and admin replies
+    const adminTweets = adminData.adminTweets || adminData.tweets || []
+    const adminReplies = adminData.adminReplies || []
+
+    // Merge admin replies into user tweets
+    const userTweetsWithAdminReplies = userTweets.map((tweet: any) => {
+      const tweetAdminReplies = adminReplies.filter((reply: any) => reply.userTweetId === tweet.id)
+      
+      if (tweetAdminReplies.length === 0) {
+        return tweet
+      }
+
+      // Merge admin replies into comments
+      const comments = [...(tweet.comments || [])]
+      
+      // Sort admin replies by commentIndex (null/undefined first, then by index)
+      const sortedReplies = [...tweetAdminReplies].sort((a: any, b: any) => {
+        if (a.commentIndex === null || a.commentIndex === undefined) return 1
+        if (b.commentIndex === null || b.commentIndex === undefined) return -1
+        return a.commentIndex - b.commentIndex
+      })
+
+      // Process admin replies (including nested replies)
+      sortedReplies.forEach((reply: any) => {
+        if (reply.commentIndex === null || reply.commentIndex === undefined) {
+          // Reply to the tweet itself - append to comments
+          comments.push({
+            author: reply.author,
+            content: reply.content,
+            timestamp: reply.timestamp
+          })
+        } else {
+          // Reply to a specific comment or nested reply
+          const comment = comments[reply.commentIndex]
+          if (comment) {
+            if (reply.replyId) {
+              // Reply to a specific nested reply by ID
+              if (!comment.replies) comment.replies = []
+              const replyIndex = comment.replies.findIndex((r: any) => r.id === reply.replyId)
+              if (replyIndex !== -1) {
+                // Insert after the specific reply
+                comment.replies.splice(replyIndex + 1, 0, {
+                  author: reply.author,
+                  content: reply.content,
+                  timestamp: reply.timestamp
+                })
+              } else {
+                // If reply ID not found, append to replies
+                comment.replies.push({
+                  author: reply.author,
+                  content: reply.content,
+                  timestamp: reply.timestamp
+                })
+              }
+            } else {
+              // Reply to the comment itself - add as nested reply
+              if (!comment.replies) comment.replies = []
+              comment.replies.push({
+                author: reply.author,
+                content: reply.content,
+                timestamp: reply.timestamp
+              })
+            }
+          }
+        }
+      })
+
+      return {
+        ...tweet,
+        comments
+      }
+    })
+
+    // Merge and sort by created_at (newest first)
+    const allTweets = [...adminTweets, ...userTweetsWithAdminReplies].sort((a, b) => {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+
+    // Apply pagination
+    const paginatedTweets = allTweets.slice(offset, offset + limit)
+
+    console.log(`Fetched ${paginatedTweets.length} tweets (${adminTweets.length} admin + ${userTweets.length} user)`)
+
+    return NextResponse.json({
+      success: true,
+      tweets: paginatedTweets,
+      total: allTweets.length,
+      limit,
+      offset
+    })
+  } catch (error) {
+    console.error('Error fetching tweets:', error)
+    return NextResponse.json({ error: 'Failed to fetch tweets' }, { status: 500 })
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  // Rate limiting
+  const clientId = getClientIdentifier(request)
+  const rateLimit = checkRateLimit(clientId, RATE_LIMITS.commentTweet)
+  
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': RATE_LIMITS.commentTweet.max.toString(),
+          'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+          'X-RateLimit-Reset': rateLimit.resetTime.toString(),
+          'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString(),
+        }
+      }
+    )
+  }
+
+  try {
+    const body = await request.json()
+    
+    // Sanitize inputs
+    const tweetId = sanitizeInput(body.tweetId || '')
+    const isAdminTweet = body.isAdmin === true
+    const isAdminReply = body.isAdminReply === true // New flag: admin replying to user tweet
+    const commentIndex = typeof body.commentIndex === 'number' ? body.commentIndex : null
+    
+    if (!tweetId) {
+      return NextResponse.json(
+        { error: 'Tweet ID is required' },
+        { status: 400 }
+      )
+    }
+
+    // Sanitize comments if provided (including nested replies)
+    let comments = body.comments
+    if (comments && Array.isArray(comments)) {
+      const makeId = (prefix: string) =>
+        `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+      const sanitizeComment = (comment: any): any => {
+        const sanitized: any = {
+          // Ensure every comment/reply has a stable id in JSON
+          id: sanitizeInput(comment.id || '') || makeId('c'),
+          author: sanitizeInput(comment.author || ''),
+          content: sanitizeInput(comment.content || ''),
+          timestamp: comment.timestamp || new Date().toISOString()
+        }
+        
+        // Include optional fields
+        if (comment.avatarImage) sanitized.avatarImage = sanitizeInput(comment.avatarImage)
+        
+        // Recursively sanitize nested replies
+        if (comment.replies && Array.isArray(comment.replies)) {
+          sanitized.replies = comment.replies.map(sanitizeComment)
+        }
+        
+        return sanitized
+      }
+      
+      comments = comments.map(sanitizeComment)
+      
+      // Validate each comment (including nested replies)
+      const validateComment = (comment: any): boolean => {
+        const validation = validateCommentContent(comment.content)
+        if (!validation.valid) return false
+        
+        if (comment.replies && Array.isArray(comment.replies)) {
+          return comment.replies.every(validateComment)
+        }
+        
+        return true
+      }
+      
+      for (const comment of comments) {
+        if (!validateComment(comment)) {
+          return NextResponse.json(
+            { error: 'Invalid comment content' },
+            { status: 400 }
+          )
+        }
+      }
+    }
+
+    const likes = typeof body.likes === 'number' ? Math.max(0, Math.floor(body.likes)) : undefined
+
+    // If admin is replying to a user tweet, store reply in admin-tweets.json
+    if (isAdminReply && !isAdminTweet && comments && comments.length > 0) {
+      const adminPath = path.join(process.cwd(), 'public', 'admin-tweets.json')
+      const adminContent = await fs.readFile(adminPath, 'utf-8').catch(() => JSON.stringify({ adminTweets: [], adminReplies: [] }))
+      let adminData: any = { adminTweets: [], adminReplies: [] }
+      
+      try {
+        const parsed = JSON.parse(adminContent)
+        // Handle backward compatibility: if it's an array, wrap it
+        if (Array.isArray(parsed)) {
+          adminData = { adminTweets: parsed, adminReplies: [] }
+        } else {
+          adminData = parsed
+        }
+      } catch {
+        adminData = { adminTweets: [], adminReplies: [] }
+      }
+
+      // Ensure adminReplies array exists
+      if (!adminData.adminReplies) {
+        adminData.adminReplies = []
+      }
+      // Ensure adminTweets array exists (for backward compatibility)
+      if (!adminData.adminTweets && !adminData.tweets) {
+        adminData.adminTweets = Array.isArray(adminData) ? adminData : []
+      }
+
+      // Add admin reply with reference to user tweet
+      const lastComment = comments[comments.length - 1]
+      const newAdminReply: any = {
+        userTweetId: tweetId,
+        commentIndex: commentIndex,
+        author: lastComment.author,
+        content: lastComment.content,
+        timestamp: lastComment.timestamp
+      }
+      
+      // Include replyId if replying to a specific nested reply
+      if (replyId) {
+        newAdminReply.replyId = replyId
+      }
+
+      adminData.adminReplies.push(newAdminReply)
+      
+      // Write admin replies to admin-tweets.json
+      await fs.writeFile(adminPath, JSON.stringify(adminData, null, 2))
+      
+      return NextResponse.json({ success: true, adminReply: newAdminReply })
+    }
+
+    // Regular update: Choose file based on whether it's admin or user tweet
+    const fileName = isAdminTweet ? 'admin-tweets.json' : 'user-tweets.json'
+    const filePath = path.join(process.cwd(), 'public', fileName)
+    const fileContent = await fs.readFile(filePath, 'utf-8')
+    let data: any = JSON.parse(fileContent)
+
+    // Handle admin-tweets.json structure (could be array or object)
+    if (isAdminTweet && !Array.isArray(data)) {
+      // If it's the new structure, update adminTweets array
+      if (data.adminTweets) {
+        data.adminTweets = data.adminTweets.map((tweet: any) => {
+          if (tweet.id === tweetId) {
+            const updatedTweet = { ...tweet }
+            if (likes !== undefined) updatedTweet.likes = likes
+            if (comments !== undefined) updatedTweet.comments = comments
+            updatedTweet.updatedAt = new Date().toISOString()
+            return updatedTweet
+          }
+          return tweet
+        })
+        await fs.writeFile(filePath, JSON.stringify(data, null, 2))
+        return NextResponse.json({ success: true, likes, comments })
+      }
+      // Fallback: treat as array
+      data = data.tweets || []
+    }
+
+    // Update the tweet (for user tweets or old admin format)
+    const tweets = Array.isArray(data) ? data : (data.tweets || [])
+    const updatedTweets = tweets.map((tweet: any) => {
+      if (tweet.id === tweetId) {
+        const updatedTweet = { ...tweet }
+        if (likes !== undefined) updatedTweet.likes = likes
+        if (comments !== undefined) updatedTweet.comments = comments
+        updatedTweet.updatedAt = new Date().toISOString()
+        return updatedTweet
+      }
+      return tweet
+    })
+
+    // Write back to the file
+    if (isAdminTweet && !Array.isArray(data)) {
+      // Preserve adminReplies when writing
+      await fs.writeFile(filePath, JSON.stringify({ ...data, adminTweets: updatedTweets }, null, 2))
+    } else {
+      await fs.writeFile(filePath, JSON.stringify(updatedTweets, null, 2))
+    }
+
+    return NextResponse.json({ success: true, likes, comments })
+  } catch (error) {
+    console.error('Error updating tweet:', error)
+    return NextResponse.json({ error: 'Failed to update tweet' }, { status: 500 })
+  }
+}
+
+// PATCH endpoint for editing tweets (within 1 hour)
+export async function PATCH(request: NextRequest) {
+  // Rate limiting
+  const clientId = getClientIdentifier(request)
+  const rateLimit = checkRateLimit(clientId, RATE_LIMITS.commentTweet)
+  
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': RATE_LIMITS.commentTweet.max.toString(),
+          'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+          'X-RateLimit-Reset': rateLimit.resetTime.toString(),
+          'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString(),
+        }
+      }
+    )
+  }
+
+  try {
+    const body = await request.json()
+    
+    // Sanitize inputs
+    const tweetId = sanitizeInput(body.tweetId || '')
+    const newContent = sanitizeInput(body.content || '')
+    const isAdminTweet = body.isAdmin === true
+    
+    if (!tweetId) {
+      return NextResponse.json(
+        { error: 'Tweet ID is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!newContent || newContent.trim().length === 0) {
+      return NextResponse.json(
+        { error: 'Tweet content is required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate tweet content
+    const contentValidation = validateTweetContent(newContent, TWEET_CONFIG.MAX_LENGTH)
+    if (!contentValidation.valid) {
+      return NextResponse.json(
+        { error: contentValidation.error },
+        { status: 400 }
+      )
+    }
+
+    // Choose file based on whether it's admin or user tweet
+    const fileName = isAdminTweet ? 'admin-tweets.json' : 'user-tweets.json'
+    const filePath = path.join(process.cwd(), 'public', fileName)
+    const fileContent = await fs.readFile(filePath, 'utf-8')
+    let data: any = JSON.parse(fileContent)
+
+    // Handle admin-tweets.json structure (could be array or object)
+    let tweets: any[] = []
+    if (isAdminTweet && !Array.isArray(data)) {
+      tweets = data.adminTweets || data.tweets || []
+    } else {
+      tweets = Array.isArray(data) ? data : (data.tweets || [])
+    }
+
+    // Find the tweet
+    const tweet = tweets.find((t: any) => t.id === tweetId)
+    if (!tweet) {
+      return NextResponse.json(
+        { error: 'Tweet not found' },
+        { status: 404 }
+      )
+    }
+
+    // Check if tweet can be edited (within 1 hour)
+    const createdAt = new Date(tweet.created_at)
+    const now = new Date()
+    const timeSinceCreation = now.getTime() - createdAt.getTime()
+
+    if (timeSinceCreation > TWEET_CONFIG.EDIT_TIME_LIMIT_MS) {
+      return NextResponse.json(
+        { error: 'Tweet can only be edited within 1 hour of creation' },
+        { status: 403 }
+      )
+    }
+
+    // Update the tweet
+    const updatedTweet = {
+      ...tweet,
+      content: newContent.trim(),
+      updatedAt: new Date().toISOString(),
+      edited: true,
+    }
+
+    // Update in array
+    const updatedTweets = tweets.map((t: any) =>
+      t.id === tweetId ? updatedTweet : t
+    )
+
+    // Write back to file
+    if (isAdminTweet && !Array.isArray(data)) {
+      await fs.writeFile(filePath, JSON.stringify({ ...data, adminTweets: updatedTweets }, null, 2))
+    } else {
+      await fs.writeFile(filePath, JSON.stringify(updatedTweets, null, 2))
+    }
+
+    return NextResponse.json({ success: true, tweet: updatedTweet })
+  } catch (error) {
+    console.error('Error editing tweet:', error)
+    return NextResponse.json({ error: 'Failed to edit tweet' }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  // Rate limiting
+  const clientId = getClientIdentifier(request)
+  const rateLimit = checkRateLimit(clientId, RATE_LIMITS.createTweet)
+  
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': RATE_LIMITS.createTweet.max.toString(),
+          'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+          'X-RateLimit-Reset': rateLimit.resetTime.toString(),
+          'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString(),
+        }
+      }
+    )
+  }
+
+  try {
+    const body = await request.json()
+    
+    // Sanitize and validate inputs
+    const content = sanitizeInput(body.content || '')
+    const author = sanitizeInput(body.author || '')
+    const handle = sanitizeInput(body.handle || '')
+    const email = sanitizeInput(body.email || '')
+    const imageUrl = body.imageUrl ? sanitizeInput(body.imageUrl) : null
+
+    // Validate tweet content
+    const contentValidation = validateTweetContent(content)
+    if (!contentValidation.valid) {
+      return NextResponse.json(
+        { error: contentValidation.error },
+        { status: 400 }
+      )
+    }
+
+    // Validate email format (format only, no sending)
+    if (email) {
+      const emailValidation = validateEmailFormat(email)
+      if (!emailValidation.valid) {
+        return NextResponse.json(
+          { error: emailValidation.error },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Validate author and handle
+    if (!author || author.length < 1 || author.length > 50) {
+      return NextResponse.json(
+        { error: 'Author name must be between 1 and 50 characters' },
+        { status: 400 }
+      )
+    }
+
+    if (!handle || handle.length < 1 || handle.length > 20) {
+      return NextResponse.json(
+        { error: 'Handle must be between 1 and 20 characters' },
+        { status: 400 }
+      )
+    }
+
+    // User tweets go to user-tweets.json
+    const filePath = path.join(process.cwd(), 'public', 'user-tweets.json')
+    const fileContent = await fs.readFile(filePath, 'utf-8')
+    const tweets = JSON.parse(fileContent)
+
+    // Create new tweet with unique ID
+    const newTweet = {
+      id: `user-${Date.now()}`,
+      author,
+      handle,
+      avatar: 'user',
+      avatarImage: '/placeholder-user.jpg',
+      content,
+      image: imageUrl || null,
+      created_at: new Date().toISOString(),
+      updatedAt: null,
+      likes: 0,
+      comments: [],
+      retweets: 0,
+      replies: 0
+    }
+
+    // Add to array
+    tweets.push(newTweet)
+
+    // Write back to the file
+    await fs.writeFile(filePath, JSON.stringify(tweets, null, 2))
+
+    return NextResponse.json({ success: true, tweet: newTweet })
+  } catch (error) {
+    console.error('Error creating tweet:', error)
+    return NextResponse.json({ error: 'Failed to create tweet' }, { status: 500 })
+  }
+}
+
+// DELETE endpoint for removing tweets
+export async function DELETE(request: NextRequest) {
+  // Rate limiting
+  const clientId = getClientIdentifier(request)
+  const rateLimit = checkRateLimit(clientId, RATE_LIMITS.default)
+  
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': RATE_LIMITS.default.max.toString(),
+          'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+          'X-RateLimit-Reset': rateLimit.resetTime.toString(),
+        }
+      }
+    )
+  }
+
+  try {
+    const body = await request.json()
+    
+    // Sanitize inputs
+    const tweetId = sanitizeInput(body.tweetId || '')
+    const isAdmin = body.isAdmin === true
+    
+    if (!tweetId) {
+      return NextResponse.json(
+        { error: 'Tweet ID is required' },
+        { status: 400 }
+      )
+    }
+
+    const fileName = isAdmin ? 'admin-tweets.json' : 'user-tweets.json'
+    const filePath = path.join(process.cwd(), 'public', fileName)
+    const fileContent = await fs.readFile(filePath, 'utf-8')
+    const tweets = JSON.parse(fileContent)
+
+    const filteredTweets = tweets.filter((tweet: any) => tweet.id !== tweetId)
+
+    await fs.writeFile(filePath, JSON.stringify(filteredTweets, null, 2))
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error deleting tweet:', error)
+    return NextResponse.json({ error: 'Failed to delete tweet' }, { status: 500 })
+  }
+}
+
+

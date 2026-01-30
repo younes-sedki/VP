@@ -145,4 +145,61 @@
   .skip-to-content {
     @apply absolute -top-20 left-4 z-50 rounded-md bg-emerald-600 px-4 py-2 text-white transition-all focus:top-4;
   }
+
+  /* Prevent hover zoom on images only (not containers) */
+img:hover {
+  transform: none !important;
+  scale: 1 !important;
+}
+
+/* Prevent browser from showing URL in status bar on hover - use JavaScript instead */
+a[href^="mailto:"] {
+  text-decoration: none;
+}
+
+/* Hide native browser tooltips for mailto links */
+a[href^="mailto:"] {
+  position: relative;
+}
+
+/* Use title attribute removal on hover to prevent browser tooltip */
+a[href^="mailto:"]:hover {
+  text-decoration: none;
+}
+
+  /* Enhanced toast animations - similar to post button scale effect */
+  @keyframes toast-slide-in {
+    0% {
+      opacity: 0;
+      transform: translateX(20px) scale(0.95);
+    }
+    50% {
+      opacity: 1;
+      transform: translateX(0) scale(1.05);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  @keyframes toast-slide-out {
+    from {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(20px) scale(0.95);
+    }
+  }
+
+  /* Apply animations to toast */
+  [data-state="open"][data-radix-toast-root] {
+    animation: toast-slide-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  [data-state="closed"][data-radix-toast-root] {
+    animation: toast-slide-out 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
 }

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react"
 
 const terminalLines = [
   { type: "command", text: "$ whoami" },
-  { type: "output", text: "YOUNES - Full-Stack Developer" },
+  { type: "output", text: "YOUNES SEDKI - Full-Stack Developer" },
   { type: "command", text: "$ cat skills.txt" },
   { type: "output", text: "→ TypeScript, React, Next.js" },
   { type: "output", text: "→ Node.js, Python, Go" },

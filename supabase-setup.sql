@@ -58,7 +58,16 @@ ALTER TABLE admin_tweets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_tweets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_replies ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Public read access for admin tweets" ON admin_tweets;
+DROP POLICY IF EXISTS "Service role full access for admin tweets" ON admin_tweets;
+DROP POLICY IF EXISTS "Public read access for user tweets" ON user_tweets;
+DROP POLICY IF EXISTS "Service role full access for user tweets" ON user_tweets;
+DROP POLICY IF EXISTS "Public read access for admin replies" ON admin_replies;
+DROP POLICY IF EXISTS "Service role full access for admin replies" ON admin_replies;
+
 -- Create policies for public access (read-only for users, write for service role)
+-- Note: Service role bypasses RLS, but we add policies for clarity
 -- Admin tweets - public read, service role write
 CREATE POLICY "Public read access for admin tweets" ON admin_tweets
   FOR SELECT USING (true);

@@ -68,13 +68,24 @@ let supabase: any = null
 
 if (hasSupabase) {
   try {
+    console.log('Initializing Supabase client...')
+    console.log(`Supabase URL: ${supabaseUrl ? 'set' : 'missing'}`)
+    console.log(`Service Key: ${supabaseServiceKey ? 'set (' + supabaseServiceKey.substring(0, 20) + '...)' : 'missing'}`)
     supabase = createClient(
       supabaseUrl!,
       supabaseServiceKey!
     )
+    console.log('Supabase client initialized successfully')
   } catch (error) {
     console.error('Failed to initialize Supabase:', error)
   }
+} else {
+  console.warn('Supabase not available:', {
+    isProduction,
+    hasSupabase,
+    supabaseUrl: supabaseUrl ? 'set' : 'missing',
+    supabaseServiceKey: supabaseServiceKey ? 'set' : 'missing'
+  })
 }
 
 // Transform database row to code format (snake_case to camelCase where needed)
@@ -122,17 +133,19 @@ function transformToDB(record: any): any {
 // Supabase storage functions
 async function getSupabaseData(tableName: string): Promise<any[]> {
   if (!supabase) {
-    console.error(`Supabase client not initialized for ${tableName}`)
+    console.error(`[${tableName}] Supabase client not initialized`)
+    console.error(`[${tableName}] hasSupabase: ${hasSupabase}, supabaseUrl: ${supabaseUrl ? 'set' : 'missing'}, supabaseServiceKey: ${supabaseServiceKey ? 'set' : 'missing'}`)
     return []
   }
   
   try {
+    console.log(`[${tableName}] Fetching data from Supabase...`)
     const { data, error } = await supabase
       .from(tableName)
       .select('*')
     
     if (error) {
-      console.error(`Supabase get error for ${tableName}:`, {
+      console.error(`[${tableName}] Supabase get error:`, {
         error,
         message: error.message,
         details: error.details,
@@ -141,10 +154,21 @@ async function getSupabaseData(tableName: string): Promise<any[]> {
       })
       throw error
     }
+    
+    console.log(`[${tableName}] Fetched ${data?.length || 0} records`)
+    if (data && data.length > 0) {
+      console.log(`[${tableName}] Sample record:`, JSON.stringify(data[0], null, 2))
+    }
+    
     // Transform data from database format to code format
-    return (data || []).map(transformFromDB)
+    const transformed = (data || []).map(transformFromDB)
+    console.log(`[${tableName}] Transformed ${transformed.length} records`)
+    return transformed
   } catch (error) {
-    console.error(`Supabase get error for ${tableName}:`, error)
+    console.error(`[${tableName}] Supabase get error:`, error)
+    if (error instanceof Error) {
+      console.error(`[${tableName}] Error message: ${error.message}`)
+    }
     return []
   }
 }
@@ -258,11 +282,14 @@ async function setLocalData(fileName: string, data: any): Promise<void> {
 export const storage = {
   // Admin tweets
   async getAdminData(): Promise<AdminData> {
+    console.log('getAdminData called, hasSupabase:', hasSupabase)
     if (hasSupabase) {
+      console.log('Fetching from Supabase...')
       const [adminTweets, adminReplies] = await Promise.all([
         getSupabaseData('admin_tweets'),
         getSupabaseData('admin_replies')
       ])
+      console.log(`getAdminData result: ${adminTweets.length} admin tweets, ${adminReplies.length} admin replies`)
       return { adminTweets, adminReplies }
     }
     if (!canUseLocalStorage) {
@@ -289,8 +316,12 @@ export const storage = {
 
   // User tweets
   async getUserTweets(): Promise<UserTweet[]> {
+    console.log('getUserTweets called, hasSupabase:', hasSupabase)
     if (hasSupabase) {
-      return await getSupabaseData('user_tweets')
+      console.log('Fetching user tweets from Supabase...')
+      const tweets = await getSupabaseData('user_tweets')
+      console.log(`getUserTweets result: ${tweets.length} user tweets`)
+      return tweets
     }
     if (!canUseLocalStorage) {
       console.error('Production mode requires Supabase. Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')

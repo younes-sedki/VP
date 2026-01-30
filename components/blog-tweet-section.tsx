@@ -4,6 +4,8 @@ import { useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 import TwitterPostFeed from '@/components/twitter-post-feed'
+import TwitterPostForm from '@/components/twitter-post-form'
+import { ProfileSetupModal } from '@/components/profile-setup-modal'
 import { useTweets } from '@/hooks/use-tweets'
 import { AuthProvider } from '@/lib/auth-context'
 
@@ -24,21 +26,21 @@ type TweetFromApi = {
 }
 
 function InnerBlogTweetSection() {
-  const { tweets, loading, error, fetchTweets } = useTweets()
+  const { tweets, loading, error, fetchTweets, createTweet } = useTweets()
 
   useEffect(() => {
     void fetchTweets()
   }, [fetchTweets])
 
-  // Filter to show only admin tweets
   const typedTweets: TweetFromApi[] = useMemo(() => {
     const allTweets = (tweets as unknown as TweetFromApi[]) ?? []
-    return allTweets.filter(tweet => tweet.avatar === 'admin')
+    return allTweets
   }, [tweets])
 
 
   return (
     <>
+      <ProfileSetupModal />
       <section
         aria-label="Latest tweets"
         className="rounded-3xl border border-white/10 bg-neutral-900/60 overflow-hidden"
@@ -52,9 +54,25 @@ function InnerBlogTweetSection() {
           </div>
         </div>
 
+        {/* Everyone can tweet */}
+        <div className="border-b border-white/10 bg-neutral-950/60">
+          <TwitterPostForm 
+            placeholder="Share something…" 
+            createTweet={createTweet}
+          />
+        </div>
+
       {error && (
-        <div className="px-4 py-2 text-sm text-red-400 border-t border-red-500/30 bg-red-500/5">
-          {error}
+        <div className="px-4 pt-3">
+          <div
+            className="relative mx-1 rounded-2xl border border-red-500/35 bg-red-500/10 
+                       bg-gradient-to-r from-red-500/15 via-red-500/5 to-transparent
+                       backdrop-blur-md px-4 py-2.5 text-sm text-red-100
+                       shadow-md shadow-red-500/30 flex items-center gap-2"
+          >
+            <div className="h-1.5 w-1.5 rounded-full bg-red-400 shadow-[0_0_12px_rgba(248,113,113,0.9)]" />
+            <p className="truncate">{error}</p>
+          </div>
         </div>
       )}
 

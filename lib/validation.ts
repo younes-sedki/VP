@@ -192,19 +192,10 @@ export function checkContentModeration(content: string): { valid: boolean; error
     }
   }
 
-  // Check for excessive repeated characters (e.g., "aaaaa")
-  if (/(.)\1{4,}/.test(content)) {
-    return { valid: false, error: 'Content contains excessive repeated characters' }
-  }
-
-  // Check for excessive capitalization (spam indicator)
-  if (words.length >= 3) {
-    const capsCount = content.split('').filter(c => c === c.toUpperCase() && c.match(/[A-Z]/)).length
-    const capsRatio = capsCount / content.length
-    if (capsRatio > 0.7) {
-      return { valid: false, error: 'Content contains excessive capitalization' }
-    }
-  }
+  // NOTE: We intentionally allow CAPITAL LETTERS and repeated characters
+  // now to give users more freedom in how they style their tweets.
+  // The previous checks for excessive capitalization and repeated
+  // characters have been removed.
 
   // Check for excessive links (potential spam)
   const linkCount = (content.match(/https?:\/\//gi) || []).length

@@ -25,13 +25,14 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
 const toastVariants = cva(
-  'group pointer-events-auto relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-lg border p-3 pr-7 shadow-lg transition-all duration-300 ease-out data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none',
+  'group pointer-events-auto relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-2xl border p-3.5 pr-7 shadow-xl shadow-black/40 transition-all duration-300 ease-out data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none',
   {
     variants: {
       variant: {
-        default: 'border-white/10 bg-neutral-900/95 backdrop-blur-sm text-white border-l-2 border-l-emerald-500',
+        default:
+          'border-white/15 bg-white/5 bg-gradient-to-r from-emerald-400/15 via-neutral-900/70 to-neutral-900/40 backdrop-blur-xl text-white',
         destructive:
-          'destructive group border-red-500/30 bg-red-950/95 backdrop-blur-sm text-red-100 border-l-2 border-l-red-500',
+          'destructive group border-red-400/40 bg-white/5 bg-gradient-to-r from-red-500/25 via-red-900/70 to-neutral-900/40 backdrop-blur-xl text-red-50',
       },
     },
     defaultVariants: {

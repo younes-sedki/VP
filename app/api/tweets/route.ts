@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
 import path from 'path'
+import { cookies } from 'next/headers'
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit'
 import { sanitizeInput, validateTweetContent, validateCommentContent, validateEmailFormat } from '@/lib/validation'
 import { TWEET_CONFIG } from '@/lib/config'
+import { ADMIN_CONFIG } from '@/lib/admin-config'
+import { getAdminCookieName, verifyAdminSessionToken } from '@/lib/admin-session'
+
+function sanitizeImageUrl(url: unknown): string | null {
+  if (!url || typeof url !== 'string') return null
+  const trimmed = url.trim()
+  if (!trimmed) return null
+
+  // Only allow data URLs (image uploads) or same-origin relative paths
+  if (trimmed.startsWith('data:image/')) return trimmed
+  if (trimmed.startsWith('/')) return trimmed
+
+  return null
+}
 
 export async function GET(request: NextRequest) {
   // Rate limiting
@@ -200,6 +215,7 @@ export async function PUT(request: NextRequest) {
     const isAdminTweet = body.isAdmin === true
     const isAdminReply = body.isAdminReply === true // New flag: admin replying to user tweet
     const commentIndex = typeof body.commentIndex === 'number' ? body.commentIndex : null
+    const replyId = body.replyId ? sanitizeInput(body.replyId) : null
     
     if (!tweetId) {
       return NextResponse.json(
@@ -504,10 +520,12 @@ export async function POST(request: NextRequest) {
     
     // Sanitize and validate inputs
     const content = sanitizeInput(body.content || '')
+    const isAdminPost = body.isAdmin === true
+
     const author = sanitizeInput(body.author || '')
     const handle = sanitizeInput(body.handle || '')
     const email = sanitizeInput(body.email || '')
-    const imageUrl = body.imageUrl ? sanitizeInput(body.imageUrl) : null
+    const imageUrl = sanitizeImageUrl(body.imageUrl || null)
 
     // Validate tweet content
     const contentValidation = validateTweetContent(content)
@@ -529,7 +547,51 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Validate author and handle
+    // Admin tweets go to admin-tweets.json (requires valid admin session cookie)
+    if (isAdminPost) {
+      const store = await cookies()
+      const token = store.get(getAdminCookieName())?.value
+      const ok = verifyAdminSessionToken(token)
+      if (!ok) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+
+      const adminPath = path.join(process.cwd(), 'public', 'admin-tweets.json')
+      const adminContent = await fs.readFile(adminPath, 'utf-8').catch(() => JSON.stringify({ adminTweets: [], adminReplies: [] }))
+
+      let adminData: any = { adminTweets: [], adminReplies: [] }
+      try {
+        const parsed = JSON.parse(adminContent)
+        adminData = Array.isArray(parsed) ? { adminTweets: parsed, adminReplies: [] } : parsed
+      } catch {
+        adminData = { adminTweets: [], adminReplies: [] }
+      }
+
+      if (!adminData.adminTweets) adminData.adminTweets = []
+      if (!adminData.adminReplies) adminData.adminReplies = []
+
+      const newTweet = {
+        id: `admin-${Date.now()}`,
+        author: ADMIN_CONFIG.name,
+        handle: ADMIN_CONFIG.handle.replace(/^@/, ''),
+        avatar: 'admin',
+        avatarImage: null,
+        content,
+        image: imageUrl,
+        created_at: new Date().toISOString(),
+        updatedAt: null,
+        likes: 0,
+        comments: [],
+        retweets: 0,
+        replies: 0
+      }
+
+      adminData.adminTweets.push(newTweet)
+      await fs.writeFile(adminPath, JSON.stringify(adminData, null, 2))
+      return NextResponse.json({ success: true, tweet: newTweet })
+    }
+
+    // Validate author and handle for user posts
     if (!author || author.length < 1 || author.length > 50) {
       return NextResponse.json(
         { error: 'Author name must be between 1 and 50 characters' },
@@ -546,8 +608,15 @@ export async function POST(request: NextRequest) {
 
     // User tweets go to user-tweets.json
     const filePath = path.join(process.cwd(), 'public', 'user-tweets.json')
-    const fileContent = await fs.readFile(filePath, 'utf-8')
-    const tweets = JSON.parse(fileContent)
+    const fileContent = await fs.readFile(filePath, 'utf-8').catch(() => '[]')
+
+    let tweets: any[] = []
+    try {
+      const parsed = JSON.parse(fileContent)
+      tweets = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.tweets) ? parsed.tweets : [])
+    } catch {
+      tweets = []
+    }
 
     // Create new tweet with unique ID
     const newTweet = {
@@ -570,12 +639,24 @@ export async function POST(request: NextRequest) {
     tweets.push(newTweet)
 
     // Write back to the file
-    await fs.writeFile(filePath, JSON.stringify(tweets, null, 2))
+    try {
+      await fs.writeFile(filePath, JSON.stringify(tweets, null, 2))
+    } catch (err) {
+      // Common in serverless/readonly environments (e.g. production deployments)
+      const code = (err as any)?.code as string | undefined
+      const base = err instanceof Error ? err.message : 'Failed to write tweet storage'
+      const hint =
+        code === 'EROFS' || code === 'EPERM' || code === 'EACCES'
+          ? 'Storage is not writable in this environment. Run locally or use a database for tweets.'
+          : ''
+      throw new Error([base, code ? `(${code})` : '', hint].filter(Boolean).join(' '))
+    }
 
     return NextResponse.json({ success: true, tweet: newTweet })
   } catch (error) {
     console.error('Error creating tweet:', error)
-    return NextResponse.json({ error: 'Failed to create tweet' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Failed to create tweet'
+    return NextResponse.json({ error: message || 'Failed to create tweet' }, { status: 500 })
   }
 }
 
@@ -616,11 +697,34 @@ export async function DELETE(request: NextRequest) {
     const fileName = isAdmin ? 'admin-tweets.json' : 'user-tweets.json'
     const filePath = path.join(process.cwd(), 'public', fileName)
     const fileContent = await fs.readFile(filePath, 'utf-8')
-    const tweets = JSON.parse(fileContent)
+    
+    if (isAdmin) {
+      // Handle admin-tweets.json structure (object with adminTweets array)
+      let adminData: any = { adminTweets: [], adminReplies: [] }
+      try {
+        const parsed = JSON.parse(fileContent)
+        adminData = Array.isArray(parsed) ? { adminTweets: parsed, adminReplies: [] } : parsed
+      } catch {
+        adminData = { adminTweets: [], adminReplies: [] }
+      }
 
-    const filteredTweets = tweets.filter((tweet: any) => tweet.id !== tweetId)
-
-    await fs.writeFile(filePath, JSON.stringify(filteredTweets, null, 2))
+      const adminTweets = adminData.adminTweets || []
+      const filteredAdminTweets = adminTweets.filter((tweet: any) => tweet.id !== tweetId)
+      
+      // Also remove any admin replies associated with this tweet if it's a user tweet
+      const filteredAdminReplies = (adminData.adminReplies || []).filter((reply: any) => reply.userTweetId !== tweetId)
+      
+      await fs.writeFile(filePath, JSON.stringify({ 
+        ...adminData, 
+        adminTweets: filteredAdminTweets,
+        adminReplies: filteredAdminReplies
+      }, null, 2))
+    } else {
+      // Handle user-tweets.json (simple array)
+      const tweets = JSON.parse(fileContent)
+      const filteredTweets = Array.isArray(tweets) ? tweets.filter((tweet: any) => tweet.id !== tweetId) : []
+      await fs.writeFile(filePath, JSON.stringify(filteredTweets, null, 2))
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

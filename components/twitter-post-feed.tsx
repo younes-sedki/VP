@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { formatDistanceToNowStrict } from 'date-fns'
 import {
   RiChat3Line,
@@ -19,9 +19,11 @@ import { getLikedTweets, toggleLike, getAdjustedLikeCount } from '@/lib/likes-st
 import { showToast } from '@/lib/toast-helpers'
 import { useRouter } from 'next/navigation'
 import { RichTextContent } from './rich-text-content'
-import { useEffect } from 'react'
 import ProfileModal from './profile-modal'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+
+const ADMIN_DISPLAY_NAME = 'Younes Sedki'
+const ADMIN_HANDLE = 'younes-sedki'
 
 interface TwitterPostFeedProps {
   data: {
@@ -37,6 +39,7 @@ interface TwitterPostFeedProps {
     likes: number
     edited?: boolean
     updatedAt?: string
+    comments?: { author: string; content: string; timestamp?: string }[]
   }
   currentUser?: {
     username?: string
@@ -116,6 +119,16 @@ export default function TwitterPostFeed({
   }, [data?.created_at])
 
   const LikeIcon = hasLiked ? RiHeart3Fill : RiHeart3Line
+
+  // Pick latest admin reply (if any) from comments
+  const latestAdminReply = useMemo(() => {
+    const comments = data.comments || []
+    if (!comments.length) return null
+    // Admin replies are saved with ADMIN_CONFIG.name
+    return [...comments]
+      .filter((c) => c.author && c.author.toLowerCase().includes('younes'))
+      .slice(-1)[0] || null
+  }, [data.comments])
 
   const goToPost = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -315,7 +328,9 @@ export default function TwitterPostFeed({
                       className="text-white text-xs font-semibold cursor-pointer hover:text-emerald-400 transition-colors"
                       onClick={(e) => {
                         e.stopPropagation()
-                        setProfileModalOpen(true)
+                        if (data.avatar === 'admin') {
+                          setProfileModalOpen(true)
+                        }
                       }}
                     >
                       {data.author}
@@ -331,7 +346,7 @@ export default function TwitterPostFeed({
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10">
-                  View profile
+                  {data.avatar === 'admin' ? 'View profile' : 'Visitor'}
                 </TooltipContent>
               </Tooltip>
               <Tooltip>
@@ -349,7 +364,7 @@ export default function TwitterPostFeed({
                   </h6>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10">
-                  View profile
+                  {data.avatar === 'admin' ? 'View profile' : 'Visitor'}
                 </TooltipContent>
               </Tooltip>
               <span className="text-white/60 text-xs">·</span>
@@ -361,9 +376,46 @@ export default function TwitterPostFeed({
                 </>
               )}
             </div>
+
             <div className="text-white text-xs mt-0.5 leading-relaxed">
               <RichTextContent content={data.content} />
             </div>
+
+            {/* Latest admin reply preview (if any) */}
+            {latestAdminReply && (
+              <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-[11px] text-white/90">
+                <div className="flex items-start gap-2">
+                  <TwitterAvatar
+                    username={ADMIN_HANDLE}
+                    avatar="admin"
+                    avatarImage={null}
+                    size="small"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className="text-xs font-semibold text-white">
+                        {ADMIN_DISPLAY_NAME}
+                      </span>
+                      <BadgeCheck 
+                        className="w-3 h-3 text-emerald-400 fill-emerald-400 flex-shrink-0" 
+                        aria-label="Verified admin"
+                      />
+                      <span className="text-[10px] text-white/60">
+                        @{ADMIN_HANDLE}
+                      </span>
+                      {latestAdminReply.timestamp && (
+                        <span className="text-white/40 text-[10px]">
+                          · {new Date(latestAdminReply.timestamp).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-white/80 whitespace-pre-wrap leading-relaxed">
+                      {latestAdminReply.content}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             {images.length > 0 && (
               <div 
                 className={`mt-2 rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:opacity-90 transition-opacity ${

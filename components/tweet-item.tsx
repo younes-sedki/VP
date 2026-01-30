@@ -70,11 +70,12 @@ interface TweetItemProps {
 }
 
 const AvatarDisplay = ({ avatar, avatarImage }: { avatar: string; avatarImage?: string | null }) => {
-  if (avatar === "admin") {
+  // Admin avatar: always use configured admin profile picture
+  if (avatar === 'admin') {
     return (
       <Image
-        src="/icon.png"
-        alt="Admin icon"
+        src={ADMIN_CONFIG.profilePicture}
+        alt={ADMIN_CONFIG.name}
         width={40}
         height={40}
         className="w-10 h-10 rounded-full object-cover flex-shrink-0"
@@ -82,6 +83,7 @@ const AvatarDisplay = ({ avatar, avatarImage }: { avatar: string; avatarImage?: 
     )
   }
 
+  // If a custom user avatar image is provided, use it
   if (avatarImage) {
     return (
       <Image
@@ -94,7 +96,16 @@ const AvatarDisplay = ({ avatar, avatarImage }: { avatar: string; avatarImage?: 
     )
   }
 
-  return <div className="text-2xl flex-shrink-0">👤</div>
+  // Fallback avatar for users/guests: consistent placeholder image
+  return (
+    <Image
+      src="/placeholder-user.jpg"
+      alt="User avatar"
+      width={40}
+      height={40}
+      className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+    />
+  )
 }
 
 // Stat animation with twitter-clone algorithm

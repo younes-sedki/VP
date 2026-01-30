@@ -103,9 +103,20 @@ export function useTweets() {
       })
       
       if (!response.ok) {
+        // Try to surface a helpful error from the API
+        let errorMessage = 'Failed to create tweet'
+        try {
+          const errorData = await response.json()
+          if (errorData?.error && typeof errorData.error === 'string') {
+            errorMessage = errorData.error
+          }
+        } catch {
+          // ignore JSON parse errors
+        }
+
         // Rollback on error
         setTweets(prev => prev.filter(t => t.id !== tempId))
-        throw new Error('Failed to create tweet')
+        throw new Error(errorMessage)
       }
       
       const data = await response.json()

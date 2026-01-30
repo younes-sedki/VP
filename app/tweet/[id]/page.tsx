@@ -50,9 +50,8 @@ export default function TweetDetailPage() {
         const data = await response.json()
         if (data.tweets && Array.isArray(data.tweets)) {
           const allTweets = data.tweets as TweetFromApi[]
-          const foundTweet = allTweets.find(
-            (t) => t.id === params.id && t.avatar === 'admin'
-          )
+          // Find tweet by ID regardless of whether it's from admin or a user
+          const foundTweet = allTweets.find((t) => t.id === params.id)
           
           if (foundTweet) {
             setTweet(foundTweet)

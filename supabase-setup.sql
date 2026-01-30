@@ -2,6 +2,7 @@
 -- Run this in your Supabase SQL editor
 
 -- Create admin_tweets table
+-- Using quoted identifiers for camelCase columns to match code
 CREATE TABLE IF NOT EXISTS admin_tweets (
   id TEXT PRIMARY KEY,
   author TEXT NOT NULL,

@@ -77,17 +77,72 @@ if (hasSupabase) {
   }
 }
 
+// Transform database row to code format (snake_case to camelCase where needed)
+function transformFromDB(row: any): any {
+  if (!row) return row
+  return {
+    ...row,
+    avatarImage: row.avatarImage || row.avatar_image,
+    created_at: row.created_at || row.createdAt,
+    updatedAt: row.updatedAt || row.updated_at,
+    userTweetId: row.userTweetId || row.user_tweet_id,
+    commentIndex: row.commentIndex !== undefined ? row.commentIndex : row.comment_index,
+    replyId: row.replyId || row.reply_id,
+  }
+}
+
+// Transform code format to database format (camelCase to snake_case where needed)
+function transformToDB(record: any): any {
+  if (!record) return record
+  const dbRecord: any = { ...record }
+  // Map camelCase to snake_case for quoted columns
+  if (dbRecord.avatarImage !== undefined) {
+    dbRecord.avatarImage = dbRecord.avatarImage
+    delete dbRecord.avatar_image
+  }
+  if (dbRecord.updatedAt !== undefined) {
+    dbRecord.updatedAt = dbRecord.updatedAt
+    delete dbRecord.updated_at
+  }
+  if (dbRecord.userTweetId !== undefined) {
+    dbRecord.userTweetId = dbRecord.userTweetId
+    delete dbRecord.user_tweet_id
+  }
+  if (dbRecord.commentIndex !== undefined) {
+    dbRecord.commentIndex = dbRecord.commentIndex
+    delete dbRecord.comment_index
+  }
+  if (dbRecord.replyId !== undefined) {
+    dbRecord.replyId = dbRecord.replyId
+    delete dbRecord.reply_id
+  }
+  return dbRecord
+}
+
 // Supabase storage functions
 async function getSupabaseData(tableName: string): Promise<any[]> {
-  if (!supabase) return []
+  if (!supabase) {
+    console.error(`Supabase client not initialized for ${tableName}`)
+    return []
+  }
   
   try {
     const { data, error } = await supabase
       .from(tableName)
       .select('*')
     
-    if (error) throw error
-    return data || []
+    if (error) {
+      console.error(`Supabase get error for ${tableName}:`, {
+        error,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
+      throw error
+    }
+    // Transform data from database format to code format
+    return (data || []).map(transformFromDB)
   } catch (error) {
     console.error(`Supabase get error for ${tableName}:`, error)
     return []
@@ -101,10 +156,16 @@ async function setSupabaseData(tableName: string, data: any[]): Promise<boolean>
     // Delete existing data
     await supabase.from(tableName).delete().neq('id', 'impossible-id')
     
-    // Insert new data
-    const { error } = await supabase.from(tableName).insert(data)
+    // Transform data to database format before inserting
+    const transformedData = data.map(transformToDB)
     
-    if (error) throw error
+    // Insert new data
+    const { error } = await supabase.from(tableName).insert(transformedData)
+    
+    if (error) {
+      console.error(`Supabase insert error:`, error)
+      throw error
+    }
     return true
   } catch (error) {
     console.error(`Supabase set error for ${tableName}:`, error)
@@ -113,15 +174,36 @@ async function setSupabaseData(tableName: string, data: any[]): Promise<boolean>
 }
 
 async function addSupabaseRecord(tableName: string, record: any): Promise<boolean> {
-  if (!supabase) return false
+  if (!supabase) {
+    console.error(`Supabase client not initialized for ${tableName}`)
+    return false
+  }
   
   try {
-    const { error } = await supabase.from(tableName).insert(record)
+    // Transform record to database format before inserting
+    const transformedRecord = transformToDB(record)
+    console.log(`Inserting into ${tableName}:`, JSON.stringify(transformedRecord, null, 2))
+    const { data, error } = await supabase.from(tableName).insert(transformedRecord)
     
-    if (error) throw error
+    if (error) {
+      console.error(`Supabase insert error for ${tableName}:`, {
+        error,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        record: transformedRecord
+      })
+      throw error
+    }
+    console.log(`Successfully inserted into ${tableName}`)
     return true
   } catch (error) {
     console.error(`Supabase add error for ${tableName}:`, error)
+    if (error instanceof Error) {
+      console.error(`Error message: ${error.message}`)
+      console.error(`Error stack: ${error.stack}`)
+    }
     return false
   }
 }

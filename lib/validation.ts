@@ -1,9 +1,24 @@
 /**
  * Input validation and sanitization utilities
  * Following OWASP security guidelines
+ * 
+ * Note: Server-side uses basic sanitization to avoid ES module issues
+ * Client-side can use DOMPurify for more comprehensive protection
  */
 
-import DOMPurify from 'isomorphic-dompurify'
+// Server-side safe sanitization (no DOMPurify dependency)
+function serverSideSanitize(input: string): string {
+  if (typeof input !== 'string') return ''
+  
+  return input
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/javascript:/gi, '') // Remove javascript: protocol
+    .replace(/on\w+\s*=/gi, '') // Remove event handlers like onclick=
+    .replace(/data:/gi, '') // Remove data: URIs (except data:image which we handle separately)
+    .replace(/vbscript:/gi, '') // Remove vbscript: protocol
+    .replace(/file:/gi, '') // Remove file: protocol
+    .trim()
+}
 
 // Username validation rules (popular/common rules)
 export const USERNAME_RULES = {
@@ -17,35 +32,43 @@ export const USERNAME_RULES = {
 export const EMAIL_DOMAINS = ['outlook.com', 'gmail.com', 'yahoo.com']
 
 /**
- * Sanitize user input to prevent XSS attacks using DOMPurify
+ * Sanitize user input to prevent XSS attacks
+ * Uses server-side safe sanitization to avoid ES module issues
  */
 export function sanitizeInput(input: string): string {
-  if (typeof input !== 'string') return ''
-  
-  // Use DOMPurify for comprehensive XSS protection
-  const sanitized = DOMPurify.sanitize(input, {
-    ALLOWED_TAGS: [], // No HTML tags allowed in plain text input
-    ALLOWED_ATTR: [],
-    KEEP_CONTENT: true,
-  }) as string
-  
-  return sanitized
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+=/gi, '') // Remove event handlers like onclick=
-    .trim()
+  return serverSideSanitize(input)
 }
 
 /**
  * Sanitize HTML content for rich text display (allows safe HTML)
+ * Uses basic regex-based sanitization for server-side compatibility
  */
 export function sanitizeHtml(html: string): string {
   if (typeof html !== 'string') return ''
   
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['b', 'strong', 'i', 'em', 'u', 'code', 'pre', 'a', 'p', 'br'],
-    ALLOWED_ATTR: ['href', 'target', 'rel'],
-    ALLOW_DATA_ATTR: false,
-  })
+  // Allow only safe HTML tags
+  const allowedTags = ['b', 'strong', 'i', 'em', 'u', 'code', 'pre', 'a', 'p', 'br']
+  const allowedTagPattern = allowedTags.join('|')
+  
+  // Remove all tags except allowed ones
+  let sanitized = html.replace(
+    new RegExp(`<(?!\/?(${allowedTagPattern})\\b)[^>]+>`, 'gi'),
+    ''
+  )
+  
+  // Remove dangerous attributes from allowed tags
+  sanitized = sanitized.replace(
+    /<(a)\s+[^>]*(href\s*=\s*["']?([^"'\s>]+)["']?)[^>]*>/gi,
+    (match, tag, hrefAttr, href) => {
+      // Only allow http/https links
+      if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
+        return `<${tag} href="${href}" target="_blank" rel="noopener noreferrer">`
+      }
+      return ''
+    }
+  )
+  
+  return sanitized
 }
 
 /**

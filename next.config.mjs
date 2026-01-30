@@ -32,21 +32,20 @@ const nextConfig = {
   ],
   
   // Exclude problematic packages from serverless function file tracing
-  experimental: {
-    outputFileTracingExcludes: {
-      '*': [
-        'node_modules/.pnpm/html-encoding-sniffer@*/**',
-        'node_modules/.pnpm/@exodus+bytes@*/**',
-        'node_modules/.pnpm/jsdom@*/**',
-        'node_modules/.pnpm/dompurify@*/**',
-        'node_modules/.pnpm/isomorphic-dompurify@*/**',
-        'node_modules/html-encoding-sniffer/**',
-        'node_modules/@exodus/bytes/**',
-        'node_modules/jsdom/**',
-        'node_modules/dompurify/**',
-        'node_modules/isomorphic-dompurify/**',
-      ],
-    },
+  // Moved from experimental.outputFileTracingExcludes in Next.js 15.2.8
+  outputFileTracingExcludes: {
+    '*': [
+      'node_modules/.pnpm/html-encoding-sniffer@*/**',
+      'node_modules/.pnpm/@exodus+bytes@*/**',
+      'node_modules/.pnpm/jsdom@*/**',
+      'node_modules/.pnpm/dompurify@*/**',
+      'node_modules/.pnpm/isomorphic-dompurify@*/**',
+      'node_modules/html-encoding-sniffer/**',
+      'node_modules/@exodus/bytes/**',
+      'node_modules/jsdom/**',
+      'node_modules/dompurify/**',
+      'node_modules/isomorphic-dompurify/**',
+    ],
   },
   
   webpack: (config, { isServer }) => {

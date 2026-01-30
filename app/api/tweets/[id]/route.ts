@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { promises as fs } from 'fs'
-import path from 'path'
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit'
 import { sanitizeInput } from '@/lib/validation'
+import storage from '@/lib/supabase-storage'
 
 export async function GET(
   request: NextRequest,
@@ -37,37 +36,14 @@ export async function GET(
       )
     }
 
-    const adminPath = path.join(process.cwd(), 'public', 'admin-tweets.json')
-    const userPath = path.join(process.cwd(), 'public', 'user-tweets.json')
-
-    const [adminContent, userContent] = await Promise.all([
-      fs.readFile(adminPath, 'utf-8').catch(() => JSON.stringify({ adminTweets: [], adminReplies: [] })),
-      fs.readFile(userPath, 'utf-8').catch(() => '[]'),
+    // Read both admin and user tweets using storage
+    const [adminData, userTweets] = await Promise.all([
+      storage.getAdminData(),
+      storage.getUserTweets()
     ])
 
-    let adminData: any = { adminTweets: [], adminReplies: [] }
-    let userTweets = []
-    
-    try {
-      const parsed = JSON.parse(adminContent)
-      // Handle backward compatibility: if it's an array, wrap it
-      if (Array.isArray(parsed)) {
-        adminData = { adminTweets: parsed, adminReplies: [] }
-      } else {
-        adminData = parsed
-      }
-    } catch {
-      adminData = { adminTweets: [], adminReplies: [] }
-    }
-    
-    try {
-      userTweets = JSON.parse(userContent)
-    } catch {
-      userTweets = []
-    }
-
     // Extract admin tweets and admin replies
-    const adminTweets = adminData.adminTweets || adminData.tweets || []
+    const adminTweets = adminData.adminTweets || []
     const adminReplies = adminData.adminReplies || []
 
     const adminTweet = adminTweets.find((t: any) => t.id === id)

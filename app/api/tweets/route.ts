@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { promises as fs } from 'fs'
-import path from 'path'
 import { cookies } from 'next/headers'
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit'
 import { sanitizeInput, validateTweetContent, validateCommentContent, validateEmailFormat } from '@/lib/validation'
 import { TWEET_CONFIG } from '@/lib/config'
 import { ADMIN_CONFIG } from '@/lib/admin-config'
 import { getAdminCookieName, verifyAdminSessionToken } from '@/lib/admin-session'
+import storage from '@/lib/supabase-storage'
 
 function sanitizeImageUrl(url: unknown): string | null {
   if (!url || typeof url !== 'string') return null
@@ -53,46 +52,14 @@ export async function GET(request: NextRequest) {
       ? Math.max(parseInt(offsetParam), 0) // Must be >= 0
       : 0
 
-    // Read both admin and user tweets
-    const adminPath = path.join(process.cwd(), 'public', 'admin-tweets.json')
-    const userPath = path.join(process.cwd(), 'public', 'user-tweets.json')
-
-    const [adminContent, userContent] = await Promise.all([
-      fs.readFile(adminPath, 'utf-8').catch((err) => {
-        console.error('Error reading admin-tweets.json:', err)
-        return JSON.stringify({ adminTweets: [], adminReplies: [] })
-      }),
-      fs.readFile(userPath, 'utf-8').catch((err) => {
-        console.error('Error reading user-tweets.json:', err)
-        return '[]'
-      })
+    // Read both admin and user tweets using storage
+    const [adminData, userTweets] = await Promise.all([
+      storage.getAdminData(),
+      storage.getUserTweets()
     ])
 
-    let adminData: any = { adminTweets: [], adminReplies: [] }
-    let userTweets = []
-    
-    try {
-      const parsed = JSON.parse(adminContent)
-      // Handle backward compatibility: if it's an array, wrap it
-      if (Array.isArray(parsed)) {
-        adminData = { adminTweets: parsed, adminReplies: [] }
-      } else {
-        adminData = parsed
-      }
-    } catch (err) {
-      console.error('Error parsing admin-tweets.json:', err)
-      adminData = { adminTweets: [], adminReplies: [] }
-    }
-    
-    try {
-      userTweets = JSON.parse(userContent)
-    } catch (err) {
-      console.error('Error parsing user-tweets.json:', err)
-      userTweets = []
-    }
-
     // Extract admin tweets and admin replies
-    const adminTweets = adminData.adminTweets || adminData.tweets || []
+    const adminTweets = adminData.adminTweets || []
     const adminReplies = adminData.adminReplies || []
 
     // Merge admin replies into user tweets
@@ -276,32 +243,9 @@ export async function PUT(request: NextRequest) {
 
     const likes = typeof body.likes === 'number' ? Math.max(0, Math.floor(body.likes)) : undefined
 
-    // If admin is replying to a user tweet, store reply in admin-tweets.json
+    // If admin is replying to a user tweet, store reply using storage
     if (isAdminReply && !isAdminTweet && comments && comments.length > 0) {
-      const adminPath = path.join(process.cwd(), 'public', 'admin-tweets.json')
-      const adminContent = await fs.readFile(adminPath, 'utf-8').catch(() => JSON.stringify({ adminTweets: [], adminReplies: [] }))
-      let adminData: any = { adminTweets: [], adminReplies: [] }
-      
-      try {
-        const parsed = JSON.parse(adminContent)
-        // Handle backward compatibility: if it's an array, wrap it
-        if (Array.isArray(parsed)) {
-          adminData = { adminTweets: parsed, adminReplies: [] }
-        } else {
-          adminData = parsed
-        }
-      } catch {
-        adminData = { adminTweets: [], adminReplies: [] }
-      }
-
-      // Ensure adminReplies array exists
-      if (!adminData.adminReplies) {
-        adminData.adminReplies = []
-      }
-      // Ensure adminTweets array exists (for backward compatibility)
-      if (!adminData.adminTweets && !adminData.tweets) {
-        adminData.adminTweets = Array.isArray(adminData) ? adminData : []
-      }
+      const adminData = await storage.getAdminData()
 
       // Add admin reply with reference to user tweet
       const lastComment = comments[comments.length - 1]
@@ -318,60 +262,40 @@ export async function PUT(request: NextRequest) {
         newAdminReply.replyId = replyId
       }
 
-      adminData.adminReplies.push(newAdminReply)
-      
-      // Write admin replies to admin-tweets.json
-      await fs.writeFile(adminPath, JSON.stringify(adminData, null, 2))
+      await storage.addAdminReply(newAdminReply)
       
       return NextResponse.json({ success: true, adminReply: newAdminReply })
     }
 
-    // Regular update: Choose file based on whether it's admin or user tweet
-    const fileName = isAdminTweet ? 'admin-tweets.json' : 'user-tweets.json'
-    const filePath = path.join(process.cwd(), 'public', fileName)
-    const fileContent = await fs.readFile(filePath, 'utf-8')
-    let data: any = JSON.parse(fileContent)
-
-    // Handle admin-tweets.json structure (could be array or object)
-    if (isAdminTweet && !Array.isArray(data)) {
-      // If it's the new structure, update adminTweets array
-      if (data.adminTweets) {
-        data.adminTweets = data.adminTweets.map((tweet: any) => {
-          if (tweet.id === tweetId) {
-            const updatedTweet = { ...tweet }
-            if (likes !== undefined) updatedTweet.likes = likes
-            if (comments !== undefined) updatedTweet.comments = comments
-            updatedTweet.updatedAt = new Date().toISOString()
-            return updatedTweet
-          }
-          return tweet
-        })
-        await fs.writeFile(filePath, JSON.stringify(data, null, 2))
-        return NextResponse.json({ success: true, likes, comments })
-      }
-      // Fallback: treat as array
-      data = data.tweets || []
-    }
-
-    // Update the tweet (for user tweets or old admin format)
-    const tweets = Array.isArray(data) ? data : (data.tweets || [])
-    const updatedTweets = tweets.map((tweet: any) => {
-      if (tweet.id === tweetId) {
-        const updatedTweet = { ...tweet }
-        if (likes !== undefined) updatedTweet.likes = likes
-        if (comments !== undefined) updatedTweet.comments = comments
-        updatedTweet.updatedAt = new Date().toISOString()
-        return updatedTweet
-      }
-      return tweet
-    })
-
-    // Write back to the file
-    if (isAdminTweet && !Array.isArray(data)) {
-      // Preserve adminReplies when writing
-      await fs.writeFile(filePath, JSON.stringify({ ...data, adminTweets: updatedTweets }, null, 2))
+    // Regular update: Use storage based on tweet type
+    if (isAdminTweet) {
+      const adminData = await storage.getAdminData()
+      const updatedAdminTweets = adminData.adminTweets.map((tweet: any) => {
+        if (tweet.id === tweetId) {
+          const updatedTweet = { ...tweet }
+          if (likes !== undefined) updatedTweet.likes = likes
+          if (comments !== undefined) updatedTweet.comments = comments
+          updatedTweet.updatedAt = new Date().toISOString()
+          return updatedTweet
+        }
+        return tweet
+      })
+      
+      await storage.setAdminData({ ...adminData, adminTweets: updatedAdminTweets })
     } else {
-      await fs.writeFile(filePath, JSON.stringify(updatedTweets, null, 2))
+      const userTweets = await storage.getUserTweets()
+      const updatedUserTweets = userTweets.map((tweet: any) => {
+        if (tweet.id === tweetId) {
+          const updatedTweet = { ...tweet }
+          if (likes !== undefined) updatedTweet.likes = likes
+          if (comments !== undefined) updatedTweet.comments = comments
+          updatedTweet.updatedAt = new Date().toISOString()
+          return updatedTweet
+        }
+        return tweet
+      })
+      
+      await storage.setUserTweets(updatedUserTweets)
     }
 
     return NextResponse.json({ success: true, likes, comments })
@@ -433,18 +357,13 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Choose file based on whether it's admin or user tweet
-    const fileName = isAdminTweet ? 'admin-tweets.json' : 'user-tweets.json'
-    const filePath = path.join(process.cwd(), 'public', fileName)
-    const fileContent = await fs.readFile(filePath, 'utf-8')
-    let data: any = JSON.parse(fileContent)
-
-    // Handle admin-tweets.json structure (could be array or object)
+    // Use storage based on whether it's admin or user tweet
     let tweets: any[] = []
-    if (isAdminTweet && !Array.isArray(data)) {
-      tweets = data.adminTweets || data.tweets || []
+    if (isAdminTweet) {
+      const adminData = await storage.getAdminData()
+      tweets = adminData.adminTweets || []
     } else {
-      tweets = Array.isArray(data) ? data : (data.tweets || [])
+      tweets = await storage.getUserTweets()
     }
 
     // Find the tweet
@@ -476,16 +395,19 @@ export async function PATCH(request: NextRequest) {
       edited: true,
     }
 
-    // Update in array
-    const updatedTweets = tweets.map((t: any) =>
-      t.id === tweetId ? updatedTweet : t
-    )
-
-    // Write back to file
-    if (isAdminTweet && !Array.isArray(data)) {
-      await fs.writeFile(filePath, JSON.stringify({ ...data, adminTweets: updatedTweets }, null, 2))
+    // Update in storage
+    if (isAdminTweet) {
+      const adminData = await storage.getAdminData()
+      const updatedAdminTweets = adminData.adminTweets.map((t: any) =>
+        t.id === tweetId ? updatedTweet : t
+      )
+      await storage.setAdminData({ ...adminData, adminTweets: updatedAdminTweets })
     } else {
-      await fs.writeFile(filePath, JSON.stringify(updatedTweets, null, 2))
+      const userTweets = await storage.getUserTweets()
+      const updatedUserTweets = userTweets.map((t: any) =>
+        t.id === tweetId ? updatedTweet : t
+      )
+      await storage.setUserTweets(updatedUserTweets)
     }
 
     return NextResponse.json({ success: true, tweet: updatedTweet })
@@ -547,7 +469,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Admin tweets go to admin-tweets.json (requires valid admin session cookie)
+    // Admin tweets go to storage (requires valid admin session cookie)
     if (isAdminPost) {
       const store = await cookies()
       const token = store.get(getAdminCookieName())?.value
@@ -555,20 +477,6 @@ export async function POST(request: NextRequest) {
       if (!ok) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
-
-      const adminPath = path.join(process.cwd(), 'public', 'admin-tweets.json')
-      const adminContent = await fs.readFile(adminPath, 'utf-8').catch(() => JSON.stringify({ adminTweets: [], adminReplies: [] }))
-
-      let adminData: any = { adminTweets: [], adminReplies: [] }
-      try {
-        const parsed = JSON.parse(adminContent)
-        adminData = Array.isArray(parsed) ? { adminTweets: parsed, adminReplies: [] } : parsed
-      } catch {
-        adminData = { adminTweets: [], adminReplies: [] }
-      }
-
-      if (!adminData.adminTweets) adminData.adminTweets = []
-      if (!adminData.adminReplies) adminData.adminReplies = []
 
       const newTweet = {
         id: `admin-${Date.now()}`,
@@ -586,8 +494,7 @@ export async function POST(request: NextRequest) {
         replies: 0
       }
 
-      adminData.adminTweets.push(newTweet)
-      await fs.writeFile(adminPath, JSON.stringify(adminData, null, 2))
+      await storage.addAdminTweet(newTweet)
       return NextResponse.json({ success: true, tweet: newTweet })
     }
 
@@ -606,17 +513,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // User tweets go to user-tweets.json
-    const filePath = path.join(process.cwd(), 'public', 'user-tweets.json')
-    const fileContent = await fs.readFile(filePath, 'utf-8').catch(() => '[]')
-
-    let tweets: any[] = []
-    try {
-      const parsed = JSON.parse(fileContent)
-      tweets = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.tweets) ? parsed.tweets : [])
-    } catch {
-      tweets = []
-    }
+    // User tweets go to storage
+    const userTweets = await storage.getUserTweets()
 
     // Create new tweet with unique ID
     const newTweet = {
@@ -635,22 +533,8 @@ export async function POST(request: NextRequest) {
       replies: 0
     }
 
-    // Add to array
-    tweets.push(newTweet)
-
-    // Write back to the file
-    try {
-      await fs.writeFile(filePath, JSON.stringify(tweets, null, 2))
-    } catch (err) {
-      // Common in serverless/readonly environments (e.g. production deployments)
-      const code = (err as any)?.code as string | undefined
-      const base = err instanceof Error ? err.message : 'Failed to write tweet storage'
-      const hint =
-        code === 'EROFS' || code === 'EPERM' || code === 'EACCES'
-          ? 'Storage is not writable in this environment. Run locally or use a database for tweets.'
-          : ''
-      throw new Error([base, code ? `(${code})` : '', hint].filter(Boolean).join(' '))
-    }
+    // Add to storage
+    await storage.addUserTweet(newTweet)
 
     return NextResponse.json({ success: true, tweet: newTweet })
   } catch (error) {
@@ -694,36 +578,11 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const fileName = isAdmin ? 'admin-tweets.json' : 'user-tweets.json'
-    const filePath = path.join(process.cwd(), 'public', fileName)
-    const fileContent = await fs.readFile(filePath, 'utf-8')
-    
+    // Use storage based on tweet type
     if (isAdmin) {
-      // Handle admin-tweets.json structure (object with adminTweets array)
-      let adminData: any = { adminTweets: [], adminReplies: [] }
-      try {
-        const parsed = JSON.parse(fileContent)
-        adminData = Array.isArray(parsed) ? { adminTweets: parsed, adminReplies: [] } : parsed
-      } catch {
-        adminData = { adminTweets: [], adminReplies: [] }
-      }
-
-      const adminTweets = adminData.adminTweets || []
-      const filteredAdminTweets = adminTweets.filter((tweet: any) => tweet.id !== tweetId)
-      
-      // Also remove any admin replies associated with this tweet if it's a user tweet
-      const filteredAdminReplies = (adminData.adminReplies || []).filter((reply: any) => reply.userTweetId !== tweetId)
-      
-      await fs.writeFile(filePath, JSON.stringify({ 
-        ...adminData, 
-        adminTweets: filteredAdminTweets,
-        adminReplies: filteredAdminReplies
-      }, null, 2))
+      await storage.deleteAdminTweet(tweetId)
     } else {
-      // Handle user-tweets.json (simple array)
-      const tweets = JSON.parse(fileContent)
-      const filteredTweets = Array.isArray(tweets) ? tweets.filter((tweet: any) => tweet.id !== tweetId) : []
-      await fs.writeFile(filePath, JSON.stringify(filteredTweets, null, 2))
+      await storage.deleteUserTweet(tweetId)
     }
 
     return NextResponse.json({ success: true })

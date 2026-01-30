@@ -6,7 +6,10 @@ settings:
 
 overrides:
   '@exodus/bytes': 1.9.0
-  html-encoding-sniffer: 6.0.0
+  html-encoding-sniffer: npm:@empty/package@1.0.0
+  jsdom: npm:@empty/package@1.0.0
+  dompurify: npm:@empty/package@1.0.0
+  isomorphic-dompurify: npm:@empty/package@1.0.0
 
 importers:
 

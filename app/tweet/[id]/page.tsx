@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import TwitterPostFeed from '@/components/twitter-post-feed'
 
+export const dynamic = 'force-dynamic'
+
 type TweetFromApi = {
   id: string
   author: string

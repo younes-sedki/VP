@@ -5,6 +5,8 @@ import { ArrowLeft } from "lucide-react"
 import AnimatedHeading from "@/components/animated-heading"
 import { BlogTweetSection } from "@/components/blog-tweet-section"
 
+export const dynamic = 'force-dynamic'
+
 export default function BlogPage() {
   const router = useRouter()
 

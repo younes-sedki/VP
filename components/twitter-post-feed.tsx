@@ -32,6 +32,7 @@ interface TwitterPostFeedProps {
     avatarImage?: string | null
     content: string
     image?: string | null
+    images?: string[] | null
     created_at: string
     likes: number
     edited?: boolean
@@ -43,6 +44,7 @@ interface TwitterPostFeedProps {
   }
   onEdit?: (id: string) => void
   onDelete?: (id: string) => void
+  isDetailPage?: boolean
 }
 
 export default function TwitterPostFeed({
@@ -179,7 +181,7 @@ export default function TwitterPostFeed({
   )
 
   const handleEdit = useCallback(
-    (event: React.MouseEvent<SVGElement, MouseEvent>) => {
+    (event: React.MouseEvent<HTMLDivElement>) => {
       event.stopPropagation()
       setEditPost(false)
       onEdit?.(data.id)
@@ -372,7 +374,7 @@ export default function TwitterPostFeed({
                     : 'max-w-md grid grid-cols-2 gap-1'
                 }`}
               >
-                {images.slice(0, 4).map((img, idx) => (
+                {images.slice(0, 4).map((img: string, idx: number) => (
                   <div
                     key={idx}
                     className={`relative ${

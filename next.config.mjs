@@ -29,7 +29,7 @@ const nextConfig = {
   },
   // Handle ES modules in serverless functions
   experimental: {
-    serverComponentsExternalPackages: ['isomorphic-dompurify', 'dompurify'],
+    serverComponentsExternalPackages: ['dompurify'],
   },
 }
 

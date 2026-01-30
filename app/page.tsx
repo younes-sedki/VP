@@ -14,6 +14,8 @@ import ContactSection from "@/components/contact-section"
 import TerminalAnimation from "@/components/terminal-animation"
 import ProjectsSection from "@/components/projects-section"
 
+export const dynamic = 'force-dynamic'
+
 // ===========================================
 // SECTION VISIBILITY CONFIG
 // Set to false to hide a section

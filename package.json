@@ -93,7 +93,8 @@
 
   "pnpm": {
     "overrides": {
-      "@exodus/bytes": "1.9.0"
+      "@exodus/bytes": "1.9.0",
+      "html-encoding-sniffer": "6.0.0"
     }
   }
 }

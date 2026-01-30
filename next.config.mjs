@@ -22,6 +22,15 @@ const nextConfig = {
       },
     ],
   },
+  // Exclude problematic packages from server bundle
+  serverComponentsExternalPackages: [
+    'html-encoding-sniffer',
+    '@exodus/bytes',
+    'jsdom',
+    'dompurify',
+    'isomorphic-dompurify'
+  ],
+  
   webpack: (config, { isServer }) => {
     if (isServer) {
       // Replace problematic packages with stub modules
@@ -34,13 +43,35 @@ const nextConfig = {
         'isomorphic-dompurify': false,
       }
       
-      // Also add to externals to prevent bundling
+      // Prevent these from being bundled
       config.externals = config.externals || []
-      config.externals.push({
-        'jsdom': 'commonjs jsdom',
-        'dompurify': 'commonjs dompurify',
-        'isomorphic-dompurify': 'commonjs isomorphic-dompurify',
-      })
+      if (typeof config.externals === 'function') {
+        const originalExternals = config.externals
+        config.externals = [
+          originalExternals,
+          (context, request, callback) => {
+            const problematic = [
+              'html-encoding-sniffer',
+              '@exodus/bytes',
+              'jsdom',
+              'dompurify',
+              'isomorphic-dompurify'
+            ]
+            if (problematic.some(pkg => request === pkg || request?.startsWith(pkg + '/'))) {
+              return callback(null, `commonjs ${request}`)
+            }
+            callback()
+          }
+        ]
+      } else {
+        config.externals.push({
+          'html-encoding-sniffer': 'commonjs html-encoding-sniffer',
+          '@exodus/bytes': 'commonjs @exodus/bytes',
+          'jsdom': 'commonjs jsdom',
+          'dompurify': 'commonjs dompurify',
+          'isomorphic-dompurify': 'commonjs isomorphic-dompurify',
+        })
+      }
     }
     return config
   },

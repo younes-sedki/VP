@@ -12,30 +12,54 @@ const packagesToRemove = [
 
 const nodeModulesPath = path.join(__dirname, '..', 'node_modules');
 
-function removePackage(pkgName) {
-  const pkgPath = path.join(nodeModulesPath, pkgName);
-  if (fs.existsSync(pkgPath)) {
+function removeRecursive(dirPath) {
+  if (!fs.existsSync(dirPath)) return;
+  
+  try {
+    const stats = fs.statSync(dirPath);
+    if (stats.isDirectory()) {
+      fs.rmSync(dirPath, { recursive: true, force: true, maxRetries: 3 });
+      return true;
+    }
+  } catch (error) {
+    // Try alternative method
     try {
-      fs.rmSync(pkgPath, { recursive: true, force: true });
-      console.log(`✓ Removed ${pkgPath}`);
-    } catch (error) {
-      console.warn(`⚠ Could not remove ${pkgPath}:`, error.message);
+      const { execSync } = require('child_process');
+      if (process.platform === 'win32') {
+        execSync(`rmdir /s /q "${dirPath}"`, { stdio: 'ignore' });
+      } else {
+        execSync(`rm -rf "${dirPath}"`, { stdio: 'ignore' });
+      }
+      return true;
+    } catch (e) {
+      return false;
     }
   }
+  return false;
+}
+
+function removePackage(pkgName) {
+  // Remove from main node_modules
+  const pkgPath = path.join(nodeModulesPath, pkgName);
+  if (removeRecursive(pkgPath)) {
+    console.log(`✓ Removed ${pkgName}`);
+  }
   
-  // Also check in .pnpm directory structure
+  // Remove from .pnpm directory (pnpm structure)
   const pnpmPath = path.join(nodeModulesPath, '.pnpm');
   if (fs.existsSync(pnpmPath)) {
     try {
       const entries = fs.readdirSync(pnpmPath, { withFileTypes: true });
       entries.forEach(entry => {
-        if (entry.isDirectory() && entry.name.includes(pkgName)) {
-          const fullPath = path.join(pnpmPath, entry.name);
-          try {
-            fs.rmSync(fullPath, { recursive: true, force: true });
-            console.log(`✓ Removed ${fullPath}`);
-          } catch (error) {
-            // Ignore errors for pnpm structure
+        if (entry.isDirectory()) {
+          // pnpm format: package@version or scoped packages
+          if (entry.name.startsWith(pkgName + '@') || 
+              entry.name.includes('@' + pkgName.replace('@', '')) ||
+              entry.name === pkgName) {
+            const fullPath = path.join(pnpmPath, entry.name);
+            if (removeRecursive(fullPath)) {
+              console.log(`✓ Removed .pnpm/${entry.name}`);
+            }
           }
         }
       });
@@ -43,8 +67,28 @@ function removePackage(pkgName) {
       // Ignore if .pnpm doesn't exist or can't be read
     }
   }
+  
+  // Also remove @exodus scope if removing @exodus/bytes
+  if (pkgName === '@exodus/bytes') {
+    const exodusPath = path.join(nodeModulesPath, '@exodus');
+    if (fs.existsSync(exodusPath)) {
+      try {
+        const entries = fs.readdirSync(exodusPath, { withFileTypes: true });
+        entries.forEach(entry => {
+          if (entry.isDirectory() && entry.name === 'bytes') {
+            const bytesPath = path.join(exodusPath, entry.name);
+            if (removeRecursive(bytesPath)) {
+              console.log(`✓ Removed @exodus/bytes`);
+            }
+          }
+        });
+      } catch (error) {
+        // Ignore
+      }
+    }
+  }
 }
 
 console.log('Removing problematic ES module packages...');
 packagesToRemove.forEach(removePackage);
-console.log('Done!');
+console.log('Done removing problematic packages!');

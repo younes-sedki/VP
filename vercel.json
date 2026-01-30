@@ -4,7 +4,7 @@
   "installCommand": "npm install && node scripts/remove-problematic-packages.js",
   "framework": "nextjs",
   "env": {
-    "NEXT_PUBLIC_APP_URL": "@app_url",
+    "NEXT_PUBLIC_APP_URL": "https://www.sedkiy.dev",
     "NODE_ENV": "production"
   },
   "functions": {

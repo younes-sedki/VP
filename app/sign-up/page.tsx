@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation"
 import { AuthProvider } from "@/lib/auth-context"
 import { SignInForm } from "@/components/sign-in-form"
 
+export const dynamic = 'force-dynamic'
+
 export default function SignUpPage() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirect") || "/blog"

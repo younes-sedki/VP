@@ -282,7 +282,7 @@ export default function TwitterPostForm({
           onKeyDown={handleKeyDown}
           maxLength={maxLength * 1.2} // Allow typing over for UX
           disabled={loading}
-          rows={3}
+          rows={2}
         />
         <hr
           className="opacity-0 peer-focus:opacity-100 h-[1px] transition-opacity border-white/10 w-full"

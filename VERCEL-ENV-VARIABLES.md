@@ -2,7 +2,7 @@
 
 ## Required Variables for Your Project
 
-Add these **three variables** to your Vercel project:
+Add these **four variables** to your Vercel project:
 
 ### 1. NEXT_PUBLIC_SUPABASE_URL
 ```
@@ -25,9 +25,17 @@ npe6t4etwctaenjd
 - **Environment**: Production, Preview, Development
 - **Purpose**: Secret key for admin session authentication (required for admin login)
 
+### 4. ADMIN_PASSWORD
+```
+your_admin_password_here
+```
+- **Environment**: Production, Preview, Development
+- **Purpose**: Password for admin login (this is the password you'll use to log in)
+- **Note**: Set this to whatever password you want to use for admin access. The default fallback is `younes123` but you should set your own secure password.
+
 ## Optional (Recommended)
 
-### 4. NEXT_PUBLIC_SUPABASE_ANON_KEY
+### 5. NEXT_PUBLIC_SUPABASE_ANON_KEY
 ```
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpteHh0aXh6ZHZoeXd6bGhwenJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3ODI2ODYsImV4cCI6MjA4NTM1ODY4Nn0.73xm_oXiuKUfk3LQu-yRpRGWWNmTkJaKHIzYZfoqDwk
 ```
@@ -52,8 +60,18 @@ Once you've added the variables and redeployed:
 - ✅ "Storage not configured" error will disappear
 - ✅ "Missing ADMIN_SESSION_SECRET" error will disappear
 - ✅ Your app will connect to Supabase
-- ✅ Admin login will work properly
+- ✅ Admin login will work properly (use the password you set in `ADMIN_PASSWORD`)
 - ✅ Tweets will be stored in Supabase database
+
+## Important: Admin Password
+
+**You MUST add `ADMIN_PASSWORD` to Vercel environment variables!**
+
+- The code looks for `process.env.ADMIN_PASSWORD`
+- If not set, it defaults to `younes123` (but this may not work in production)
+- **Set your own secure password** in the `ADMIN_PASSWORD` environment variable
+- This is the password you'll use when logging into the admin panel
+- After adding it, **redeploy** your project for it to take effect
 
 ## Next Step: Run SQL Setup
 

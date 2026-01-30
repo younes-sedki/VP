@@ -29,9 +29,9 @@ export default function BlogPage() {
             lines={["Building in public", "and sharing the process"]}
           />
           <p className="max-w-2xl text-white/70 text-sm sm:text-base">
-            This space is a hybrid between a blog and a live twitter-style feed. I share quick
-            updates, experiments, and technical notes directly from my custom twitter-clone
-            engine.
+            This is my blog where I share updates, thoughts, and progress. Visitors can leave
+            feedback, share their thoughts, and engage with the content. Feel free to join the
+            conversation!
           </p>
         </header>
 

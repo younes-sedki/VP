@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
   title: {
-    default: "Younes SEDKI - Full-Stack Developer & DevOps Engineer",
+    default: "Younes SEDKI - Full-Stack Developer",
     template: "%s | Younes SEDKI",
   },
   description: "Full-Stack Developer specializing in React, Next.js, Node.js, and DevOps. Second-year student at ISTA Rabat seeking internship opportunities. Building scalable web applications with modern technologies.",

@@ -31,6 +31,24 @@ const nextConfig = {
     'isomorphic-dompurify'
   ],
   
+  // Exclude problematic packages from serverless function file tracing
+  experimental: {
+    outputFileTracingExcludes: {
+      '*': [
+        'node_modules/.pnpm/html-encoding-sniffer@*/**',
+        'node_modules/.pnpm/@exodus+bytes@*/**',
+        'node_modules/.pnpm/jsdom@*/**',
+        'node_modules/.pnpm/dompurify@*/**',
+        'node_modules/.pnpm/isomorphic-dompurify@*/**',
+        'node_modules/html-encoding-sniffer/**',
+        'node_modules/@exodus/bytes/**',
+        'node_modules/jsdom/**',
+        'node_modules/dompurify/**',
+        'node_modules/isomorphic-dompurify/**',
+      ],
+    },
+  },
+  
   webpack: (config, { isServer }) => {
     if (isServer) {
       // Replace problematic packages with stub modules

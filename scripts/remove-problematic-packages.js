@@ -91,4 +91,19 @@ function removePackage(pkgName) {
 
 console.log('Removing problematic ES module packages...');
 packagesToRemove.forEach(removePackage);
+
+// Also try to remove from .next cache if it exists
+const nextCachePath = path.join(__dirname, '..', '.next');
+if (fs.existsSync(nextCachePath)) {
+  try {
+    const cachePath = path.join(nextCachePath, 'cache');
+    if (fs.existsSync(cachePath)) {
+      console.log('Clearing .next cache...');
+      fs.rmSync(cachePath, { recursive: true, force: true });
+    }
+  } catch (error) {
+    // Ignore cache clearing errors
+  }
+}
+
 console.log('Done removing problematic packages!');

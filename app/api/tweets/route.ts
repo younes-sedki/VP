@@ -7,6 +7,15 @@ import { ADMIN_CONFIG } from '@/lib/admin-config'
 import { getAdminCookieName, verifyAdminSessionToken } from '@/lib/admin-session'
 import storage from '@/lib/supabase-storage'
 
+// CORS headers helper
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  }
+}
+
 function sanitizeImageUrl(url: unknown): string | null {
   if (!url || typeof url !== 'string') return null
   const trimmed = url.trim()
@@ -17,6 +26,11 @@ function sanitizeImageUrl(url: unknown): string | null {
   if (trimmed.startsWith('/')) return trimmed
 
   return null
+}
+
+// Handle OPTIONS requests for CORS
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders() })
 }
 
 export async function GET(request: NextRequest) {
@@ -30,6 +44,7 @@ export async function GET(request: NextRequest) {
       { 
         status: 429,
         headers: {
+          ...corsHeaders(),
           'X-RateLimit-Limit': RATE_LIMITS.default.max.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
           'X-RateLimit-Reset': rateLimit.resetTime.toString(),
@@ -147,10 +162,14 @@ export async function GET(request: NextRequest) {
       total: allTweets.length,
       limit,
       offset
-    })
+    }, { headers: corsHeaders() })
   } catch (error) {
     console.error('Error fetching tweets:', error)
-    return NextResponse.json({ error: 'Failed to fetch tweets' }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch tweets'
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500, headers: corsHeaders() }
+    )
   }
 }
 
@@ -165,6 +184,7 @@ export async function PUT(request: NextRequest) {
       { 
         status: 429,
         headers: {
+          ...corsHeaders(),
           'X-RateLimit-Limit': RATE_LIMITS.commentTweet.max.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
           'X-RateLimit-Reset': rateLimit.resetTime.toString(),
@@ -187,7 +207,7 @@ export async function PUT(request: NextRequest) {
     if (!tweetId) {
       return NextResponse.json(
         { error: 'Tweet ID is required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders() }
       )
     }
 
@@ -235,7 +255,7 @@ export async function PUT(request: NextRequest) {
         if (!validateComment(comment)) {
           return NextResponse.json(
             { error: 'Invalid comment content' },
-            { status: 400 }
+            { status: 400, headers: corsHeaders() }
           )
         }
       }
@@ -264,7 +284,7 @@ export async function PUT(request: NextRequest) {
 
       await storage.addAdminReply(newAdminReply)
       
-      return NextResponse.json({ success: true, adminReply: newAdminReply })
+      return NextResponse.json({ success: true, adminReply: newAdminReply }, { headers: corsHeaders() })
     }
 
     // Regular update: Use storage based on tweet type
@@ -298,10 +318,14 @@ export async function PUT(request: NextRequest) {
       await storage.setUserTweets(updatedUserTweets)
     }
 
-    return NextResponse.json({ success: true, likes, comments })
+    return NextResponse.json({ success: true, likes, comments }, { headers: corsHeaders() })
   } catch (error) {
     console.error('Error updating tweet:', error)
-    return NextResponse.json({ error: 'Failed to update tweet' }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update tweet'
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500, headers: corsHeaders() }
+    )
   }
 }
 
@@ -317,6 +341,7 @@ export async function PATCH(request: NextRequest) {
       { 
         status: 429,
         headers: {
+          ...corsHeaders(),
           'X-RateLimit-Limit': RATE_LIMITS.commentTweet.max.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
           'X-RateLimit-Reset': rateLimit.resetTime.toString(),
@@ -337,14 +362,14 @@ export async function PATCH(request: NextRequest) {
     if (!tweetId) {
       return NextResponse.json(
         { error: 'Tweet ID is required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders() }
       )
     }
 
     if (!newContent || newContent.trim().length === 0) {
       return NextResponse.json(
         { error: 'Tweet content is required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders() }
       )
     }
 
@@ -353,7 +378,7 @@ export async function PATCH(request: NextRequest) {
     if (!contentValidation.valid) {
       return NextResponse.json(
         { error: contentValidation.error },
-        { status: 400 }
+        { status: 400, headers: corsHeaders() }
       )
     }
 
@@ -371,7 +396,7 @@ export async function PATCH(request: NextRequest) {
     if (!tweet) {
       return NextResponse.json(
         { error: 'Tweet not found' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders() }
       )
     }
 
@@ -383,7 +408,7 @@ export async function PATCH(request: NextRequest) {
     if (timeSinceCreation > TWEET_CONFIG.EDIT_TIME_LIMIT_MS) {
       return NextResponse.json(
         { error: 'Tweet can only be edited within 1 hour of creation' },
-        { status: 403 }
+        { status: 403, headers: corsHeaders() }
       )
     }
 
@@ -410,10 +435,14 @@ export async function PATCH(request: NextRequest) {
       await storage.setUserTweets(updatedUserTweets)
     }
 
-    return NextResponse.json({ success: true, tweet: updatedTweet })
+    return NextResponse.json({ success: true, tweet: updatedTweet }, { headers: corsHeaders() })
   } catch (error) {
     console.error('Error editing tweet:', error)
-    return NextResponse.json({ error: 'Failed to edit tweet' }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to edit tweet'
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500, headers: corsHeaders() }
+    )
   }
 }
 
@@ -428,6 +457,7 @@ export async function POST(request: NextRequest) {
       { 
         status: 429,
         headers: {
+          ...corsHeaders(),
           'X-RateLimit-Limit': RATE_LIMITS.createTweet.max.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
           'X-RateLimit-Reset': rateLimit.resetTime.toString(),
@@ -454,7 +484,7 @@ export async function POST(request: NextRequest) {
     if (!contentValidation.valid) {
       return NextResponse.json(
         { error: contentValidation.error },
-        { status: 400 }
+        { status: 400, headers: corsHeaders() }
       )
     }
 
@@ -464,7 +494,7 @@ export async function POST(request: NextRequest) {
       if (!emailValidation.valid) {
         return NextResponse.json(
           { error: emailValidation.error },
-          { status: 400 }
+          { status: 400, headers: corsHeaders() }
         )
       }
     }
@@ -475,7 +505,7 @@ export async function POST(request: NextRequest) {
       const token = store.get(getAdminCookieName())?.value
       const ok = verifyAdminSessionToken(token)
       if (!ok) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders() })
       }
 
       const newTweet = {
@@ -495,21 +525,21 @@ export async function POST(request: NextRequest) {
       }
 
       await storage.addAdminTweet(newTweet)
-      return NextResponse.json({ success: true, tweet: newTweet })
+      return NextResponse.json({ success: true, tweet: newTweet }, { headers: corsHeaders() })
     }
 
     // Validate author and handle for user posts
     if (!author || author.length < 1 || author.length > 50) {
       return NextResponse.json(
         { error: 'Author name must be between 1 and 50 characters' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders() }
       )
     }
 
     if (!handle || handle.length < 1 || handle.length > 20) {
       return NextResponse.json(
         { error: 'Handle must be between 1 and 20 characters' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders() }
       )
     }
 
@@ -536,11 +566,24 @@ export async function POST(request: NextRequest) {
     // Add to storage
     await storage.addUserTweet(newTweet)
 
-    return NextResponse.json({ success: true, tweet: newTweet })
+    return NextResponse.json({ success: true, tweet: newTweet }, { headers: corsHeaders() })
   } catch (error) {
     console.error('Error creating tweet:', error)
     const message = error instanceof Error ? error.message : 'Failed to create tweet'
-    return NextResponse.json({ error: message || 'Failed to create tweet' }, { status: 500 })
+    // Check if it's a storage configuration error
+    if (message.includes('Production mode requires Supabase')) {
+      return NextResponse.json(
+        { 
+          error: 'Storage not configured. Please configure Supabase environment variables in your deployment settings.',
+          details: message
+        },
+        { status: 503, headers: corsHeaders() }
+      )
+    }
+    return NextResponse.json(
+      { error: message || 'Failed to create tweet' },
+      { status: 500, headers: corsHeaders() }
+    )
   }
 }
 
@@ -556,6 +599,7 @@ export async function DELETE(request: NextRequest) {
       { 
         status: 429,
         headers: {
+          ...corsHeaders(),
           'X-RateLimit-Limit': RATE_LIMITS.default.max.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
           'X-RateLimit-Reset': rateLimit.resetTime.toString(),
@@ -574,7 +618,7 @@ export async function DELETE(request: NextRequest) {
     if (!tweetId) {
       return NextResponse.json(
         { error: 'Tweet ID is required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders() }
       )
     }
 
@@ -585,10 +629,14 @@ export async function DELETE(request: NextRequest) {
       await storage.deleteUserTweet(tweetId)
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, { headers: corsHeaders() })
   } catch (error) {
     console.error('Error deleting tweet:', error)
-    return NextResponse.json({ error: 'Failed to delete tweet' }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : 'Failed to delete tweet'
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500, headers: corsHeaders() }
+    )
   }
 }
 

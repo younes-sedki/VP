@@ -55,7 +55,13 @@ export interface AdminData {
 
 // Check if we're in production and have Supabase available
 const isProduction = process.env.NODE_ENV === 'production'
-const hasSupabase = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
+// Support both prefixed (TWEET_) and non-prefixed variable names
+const supabaseUrl = process.env.TWEET_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceKey = process.env.TWEET_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+const hasSupabase = !!(supabaseUrl && supabaseServiceKey)
+
+// In production, file system is read-only, so we MUST use Supabase
+const canUseLocalStorage = !isProduction
 
 // Initialize Supabase client
 let supabase: any = null
@@ -63,8 +69,8 @@ let supabase: any = null
 if (hasSupabase) {
   try {
     supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      supabaseUrl!,
+      supabaseServiceKey!
     )
   } catch (error) {
     console.error('Failed to initialize Supabase:', error)
@@ -149,6 +155,14 @@ async function getLocalData(fileName: string): Promise<any> {
 }
 
 async function setLocalData(fileName: string, data: any): Promise<void> {
+  // Prevent file writes in production (read-only file system)
+  if (isProduction) {
+    throw new Error(
+      'Cannot write to file system in production. Please configure Supabase environment variables: ' +
+      'NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY'
+    )
+  }
+  
   const filePath = path.join(process.cwd(), 'public', fileName)
   try {
     await fs.writeFile(filePath, JSON.stringify(data, null, 2))
@@ -169,6 +183,10 @@ export const storage = {
       ])
       return { adminTweets, adminReplies }
     }
+    if (!canUseLocalStorage) {
+      console.error('Production mode requires Supabase. Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+      return { adminTweets: [], adminReplies: [] }
+    }
     return getLocalData('admin-tweets.json')
   },
 
@@ -178,6 +196,11 @@ export const storage = {
       const success2 = await setSupabaseData('admin_replies', data.adminReplies)
       if (!success1 || !success2) throw new Error('Failed to save to Supabase')
     } else {
+      if (!canUseLocalStorage) {
+        throw new Error(
+          'Production mode requires Supabase. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.'
+        )
+      }
       await setLocalData('admin-tweets.json', data)
     }
   },
@@ -187,6 +210,10 @@ export const storage = {
     if (hasSupabase) {
       return await getSupabaseData('user_tweets')
     }
+    if (!canUseLocalStorage) {
+      console.error('Production mode requires Supabase. Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+      return []
+    }
     return getLocalData('user-tweets.json')
   },
 
@@ -195,6 +222,11 @@ export const storage = {
       const success = await setSupabaseData('user_tweets', tweets)
       if (!success) throw new Error('Failed to save to Supabase')
     } else {
+      if (!canUseLocalStorage) {
+        throw new Error(
+          'Production mode requires Supabase. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.'
+        )
+      }
       await setLocalData('user-tweets.json', tweets)
     }
   },
@@ -205,6 +237,11 @@ export const storage = {
       const success = await addSupabaseRecord('admin_tweets', tweet)
       if (!success) throw new Error('Failed to add admin tweet to Supabase')
     } else {
+      if (!canUseLocalStorage) {
+        throw new Error(
+          'Production mode requires Supabase. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.'
+        )
+      }
       const data = await this.getAdminData()
       data.adminTweets.push(tweet)
       await this.setAdminData(data)
@@ -216,6 +253,11 @@ export const storage = {
       const success = await addSupabaseRecord('user_tweets', tweet)
       if (!success) throw new Error('Failed to add user tweet to Supabase')
     } else {
+      if (!canUseLocalStorage) {
+        throw new Error(
+          'Production mode requires Supabase. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.'
+        )
+      }
       const tweets = await this.getUserTweets()
       tweets.push(tweet)
       await this.setUserTweets(tweets)
@@ -232,6 +274,11 @@ export const storage = {
         .eq('userTweetId', tweetId)
       if (error) throw error
     } else {
+      if (!canUseLocalStorage) {
+        throw new Error(
+          'Production mode requires Supabase. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.'
+        )
+      }
       const data = await this.getAdminData()
       data.adminTweets = data.adminTweets.filter(t => t.id !== tweetId)
       data.adminReplies = data.adminReplies.filter(r => r.userTweetId !== tweetId)
@@ -249,6 +296,11 @@ export const storage = {
         .eq('userTweetId', tweetId)
       if (error) throw error
     } else {
+      if (!canUseLocalStorage) {
+        throw new Error(
+          'Production mode requires Supabase. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.'
+        )
+      }
       const tweets = await this.getUserTweets()
       const filteredTweets = tweets.filter(t => t.id !== tweetId)
       await this.setUserTweets(filteredTweets)
@@ -261,6 +313,11 @@ export const storage = {
       const success = await addSupabaseRecord('admin_replies', replyWithId)
       if (!success) throw new Error('Failed to add admin reply to Supabase')
     } else {
+      if (!canUseLocalStorage) {
+        throw new Error(
+          'Production mode requires Supabase. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.'
+        )
+      }
       const data = await this.getAdminData()
       data.adminReplies.push(reply)
       await this.setAdminData(data)

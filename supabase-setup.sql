@@ -7,11 +7,11 @@ CREATE TABLE IF NOT EXISTS admin_tweets (
   author TEXT NOT NULL,
   handle TEXT NOT NULL,
   avatar TEXT NOT NULL,
-  avatar_image TEXT,
+  "avatarImage" TEXT,
   content TEXT NOT NULL,
   image TEXT,
-  created_at TIMESTAMPTZ NOT NULL,
-  updated_at TIMESTAMPTZ,
+  "created_at" TIMESTAMPTZ NOT NULL,
+  "updatedAt" TIMESTAMPTZ,
   likes INTEGER DEFAULT 0,
   retweets INTEGER DEFAULT 0,
   replies INTEGER DEFAULT 0,
@@ -24,11 +24,11 @@ CREATE TABLE IF NOT EXISTS user_tweets (
   author TEXT NOT NULL,
   handle TEXT NOT NULL,
   avatar TEXT NOT NULL,
-  avatar_image TEXT,
+  "avatarImage" TEXT,
   content TEXT NOT NULL,
   image TEXT,
-  created_at TIMESTAMPTZ NOT NULL,
-  updated_at TIMESTAMPTZ,
+  "created_at" TIMESTAMPTZ NOT NULL,
+  "updatedAt" TIMESTAMPTZ,
   likes INTEGER DEFAULT 0,
   retweets INTEGER DEFAULT 0,
   replies INTEGER DEFAULT 0,
@@ -38,19 +38,19 @@ CREATE TABLE IF NOT EXISTS user_tweets (
 -- Create admin_replies table
 CREATE TABLE IF NOT EXISTS admin_replies (
   id TEXT PRIMARY KEY,
-  user_tweet_id TEXT NOT NULL,
-  comment_index INTEGER,
-  reply_id TEXT,
+  "userTweetId" TEXT NOT NULL,
+  "commentIndex" INTEGER,
+  "replyId" TEXT,
   author TEXT NOT NULL,
   content TEXT NOT NULL,
   timestamp TIMESTAMPTZ NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  "created_at" TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_admin_tweets_created_at ON admin_tweets(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_user_tweets_created_at ON user_tweets(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_admin_replies_user_tweet_id ON admin_replies(user_tweet_id);
+CREATE INDEX IF NOT EXISTS idx_admin_tweets_created_at ON admin_tweets("created_at" DESC);
+CREATE INDEX IF NOT EXISTS idx_user_tweets_created_at ON user_tweets("created_at" DESC);
+CREATE INDEX IF NOT EXISTS idx_admin_replies_user_tweet_id ON admin_replies("userTweetId");
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE admin_tweets ENABLE ROW LEVEL SECURITY;

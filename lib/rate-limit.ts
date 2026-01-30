@@ -11,16 +11,21 @@ interface RateLimitStore {
 }
 
 const store: RateLimitStore = {}
+let cleanupInterval: NodeJS.Timeout | null = null
 
-// Clean up expired entries every 5 minutes
-setInterval(() => {
-  const now = Date.now()
-  Object.keys(store).forEach((key) => {
-    if (store[key].resetTime < now) {
-      delete store[key]
-    }
-  })
-}, 5 * 60 * 1000)
+// Initialize cleanup interval only when needed
+function initCleanup() {
+  if (!cleanupInterval) {
+    cleanupInterval = setInterval(() => {
+      const now = Date.now()
+      Object.keys(store).forEach((key) => {
+        if (store[key].resetTime < now) {
+          delete store[key]
+        }
+      })
+    }, 5 * 60 * 1000)
+  }
+}
 
 /**
  * Rate limit configuration
@@ -42,6 +47,9 @@ export function checkRateLimit(
   identifier: string,
   limit: { max: number; window: number } = RATE_LIMITS.default
 ): { allowed: boolean; remaining: number; resetTime: number } {
+  // Initialize cleanup only when the function is actually used
+  initCleanup()
+  
   const now = Date.now()
   const key = identifier
 

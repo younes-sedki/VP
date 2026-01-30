@@ -5,7 +5,7 @@
 
 export const ADMIN_CONFIG = {
   name: 'Younes SEDKI',
-  handle: '@younes_dev',
+  handle: '@younes-sedki',
   profilePicture: '/icon.png', // Admin profile picture path
   avatar: 'admin',
 }

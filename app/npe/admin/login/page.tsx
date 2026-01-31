@@ -137,16 +137,16 @@ export default function AdminLoginPage() {
           credentials: 'include' // Ensure cookies are sent
         })
         const data = await res.json().catch(() => ({}))
-        if (!mounted) return
+        if (!isMounted) return
         
         const isLoggedIn = Boolean(data?.loggedIn)
         setLoggedIn(isLoggedIn)
         
         // If logged in, verify session is still valid periodically
-        if (isLoggedIn && mounted) {
+        if (isLoggedIn && isMounted) {
           // Re-check auth every 5 minutes to catch expired sessions
           intervalId = setInterval(async () => {
-            if (!mounted) {
+            if (!isMounted) {
               if (intervalId) clearInterval(intervalId)
               return
             }
@@ -156,9 +156,9 @@ export default function AdminLoginPage() {
                 credentials: 'include'
               })
               const recheckData = await recheckRes.json().catch(() => ({}))
-              if (!mounted) return
+              if (!isMounted) return
               const stillLoggedIn = Boolean(recheckData?.loggedIn)
-              if (!stillLoggedIn && mounted) {
+              if (!stillLoggedIn && isMounted) {
                 setLoggedIn(false)
                 if (intervalId) {
                   clearInterval(intervalId)
@@ -172,18 +172,18 @@ export default function AdminLoginPage() {
         }
       } catch (err) {
         console.error('Auth check failed:', err)
-        if (mounted) {
+        if (isMounted) {
           setLoggedIn(false)
         }
       } finally {
-        if (mounted) setChecking(false)
+        if (isMounted) setChecking(false)
       }
     }
     
     checkAuth()
     
     return () => {
-      mounted = false
+      isMounted = false
       if (intervalId) {
         clearInterval(intervalId)
         intervalId = null

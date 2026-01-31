@@ -598,6 +598,18 @@ export async function POST(request: NextRequest) {
     // User tweets go to storage
     const userTweets = await storage.getUserTweets()
 
+    // Check if handle is already taken by another user
+    const existingHandle = userTweets.some(tweet =>
+      tweet.handle.toLowerCase() === handle.toLowerCase()
+    )
+
+    if (existingHandle) {
+      return NextResponse.json(
+        { error: 'This username/handle is already taken. Please choose a different one.' },
+        { status: 409, headers: corsHeaders() }
+      )
+    }
+
     // Create new tweet with unique ID
     const newTweet = {
       id: `user-${Date.now()}`,

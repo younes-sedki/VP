@@ -111,9 +111,18 @@ export function getBadWords(): string[] {
   if (badWordsCache) {
     return badWordsCache
   }
-  
+
   // Always use the embedded list for reliability
-  badWordsCache = getFallbackBadWords()
+  const baseWords = getFallbackBadWords()
+  const expandedWords = new Set<string>()
+
+  for (const word of baseWords) {
+    expandedWords.add(word)
+    expandedWords.add(word.toLowerCase())
+    expandedWords.add(word.toUpperCase())
+  }
+
+  badWordsCache = Array.from(expandedWords)
   return badWordsCache
 }
 

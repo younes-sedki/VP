@@ -234,6 +234,46 @@ async function addSupabaseRecord(tableName: string, record: any): Promise<boolea
   }
 }
 
+async function updateSupabaseRecord(tableName: string, id: string, updates: any): Promise<boolean> {
+  if (!supabase) {
+    console.error(`Supabase client not initialized for ${tableName}`)
+    return false
+  }
+  
+  try {
+    // Transform updates to database format
+    const transformedUpdates = transformToDB(updates)
+    console.log(`Updating ${tableName} record ${id}:`, JSON.stringify(transformedUpdates, null, 2))
+    
+    const { error } = await supabase
+      .from(tableName)
+      .update(transformedUpdates)
+      .eq('id', id)
+    
+    if (error) {
+      console.error(`Supabase update error for ${tableName}:`, {
+        error,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        id,
+        updates: transformedUpdates
+      })
+      throw error
+    }
+    console.log(`Successfully updated ${tableName} record ${id}`)
+    return true
+  } catch (error) {
+    console.error(`Supabase update error for ${tableName}:`, error)
+    if (error instanceof Error) {
+      console.error(`Error message: ${error.message}`)
+      console.error(`Error stack: ${error.stack}`)
+    }
+    return false
+  }
+}
+
 async function deleteSupabaseRecord(tableName: string, id: string): Promise<boolean> {
   if (!supabase) return false
   

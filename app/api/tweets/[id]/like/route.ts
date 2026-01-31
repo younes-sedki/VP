@@ -18,7 +18,7 @@ export async function OPTIONS() {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   // Rate limiting
   const clientId = getClientIdentifier(request)
@@ -40,8 +40,11 @@ export async function POST(
     )
   }
 
+  let tweetId: string | undefined
   try {
-    const tweetId = sanitizeInput(params.id)
+    // Handle both Promise and direct params (Next.js 15+ uses Promise)
+    const resolvedParams = params instanceof Promise ? await params : params
+    tweetId = sanitizeInput(resolvedParams.id)
     
     if (!tweetId || tweetId.length === 0) {
       return NextResponse.json(
@@ -79,24 +82,43 @@ export async function POST(
     const currentLikes = tweet.likes || 0
     const newLikes = action === 'like' ? currentLikes + 1 : Math.max(0, currentLikes - 1)
     
-    // Update the tweet
-    const updatedTweet = { ...tweet, likes: newLikes }
-
-    if (isAdminTweet) {
-      // Update admin tweet
-      const updatedAdminTweets = adminTweets.map((t: any) => 
-        t.id === tweetId ? updatedTweet : t
-      )
-      await storage.setAdminData({
-        adminTweets: updatedAdminTweets,
-        adminReplies: adminData.adminReplies || []
-      })
+    // Use direct Supabase update for better performance and reliability
+    const { createClient } = await import('@supabase/supabase-js')
+    const supabaseUrl = process.env.TWEET_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.TWEET_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    if (supabaseUrl && supabaseServiceKey) {
+      // Use Supabase directly for update
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+      const tableName = isAdminTweet ? 'admin_tweets' : 'user_tweets'
+      
+      const { error } = await supabase
+        .from(tableName)
+        .update({ likes: newLikes })
+        .eq('id', tweetId)
+      
+      if (error) {
+        console.error('Supabase update error:', error)
+        throw new Error(`Failed to update likes: ${error.message}`)
+      }
     } else {
-      // Update user tweet
-      const updatedUserTweets = userTweets.map((t: any) =>
-        t.id === tweetId ? updatedTweet : t
-      )
-      await storage.setUserTweets(updatedUserTweets)
+      // Fallback to storage methods (for local development)
+      const updatedTweet = { ...tweet, likes: newLikes }
+
+      if (isAdminTweet) {
+        const updatedAdminTweets = adminTweets.map((t: any) => 
+          t.id === tweetId ? updatedTweet : t
+        )
+        await storage.setAdminData({
+          adminTweets: updatedAdminTweets,
+          adminReplies: adminData.adminReplies || []
+        })
+      } else {
+        const updatedUserTweets = userTweets.map((t: any) =>
+          t.id === tweetId ? updatedTweet : t
+        )
+        await storage.setUserTweets(updatedUserTweets)
+      }
     }
 
     return NextResponse.json(
@@ -116,8 +138,17 @@ export async function POST(
     )
   } catch (error) {
     console.error('Error updating like:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update like'
+    console.error('Error details:', {
+      tweetId: tweetId || 'unknown',
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined
+    })
     return NextResponse.json(
-      { error: 'Failed to update like' },
+      { 
+        error: 'Failed to update like',
+        details: errorMessage 
+      },
       { 
         status: 500,
         headers: {

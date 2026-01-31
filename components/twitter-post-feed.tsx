@@ -179,6 +179,10 @@ export default function TwitterPostFeed({
         if (result.success && typeof result.likes === 'number') {
           // Update with server response
           setLikeCount(result.likes)
+          // Update likedByAdmin if provided (for user tweets)
+          if (data.avatar === 'user' && 'likedByAdmin' in result) {
+            setLikedByAdmin(Boolean(result.likedByAdmin))
+          }
         }
       } catch (error) {
         // Revert optimistic update on error

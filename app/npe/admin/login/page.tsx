@@ -108,6 +108,7 @@ export default function AdminLoginPage() {
   const [replyError, setReplyError] = useState<string | null>(null)
   const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [likingTweetId, setLikingTweetId] = useState<string | null>(null)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 

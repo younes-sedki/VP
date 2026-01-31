@@ -127,7 +127,7 @@ export default function AdminLoginPage() {
   }, [])
 
   useEffect(() => {
-    let mounted = true
+    let isMounted = true
     let intervalId: number | null = null
     
     const checkAuth = async () => {

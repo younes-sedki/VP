@@ -80,19 +80,18 @@ export default function TwitterPostFeed({
 
   const { deleteTweet } = useTweets()
 
-  // Load likes from localStorage and sync with server data
+  // Load likes from server and localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return
     
+    // Use server likes as the source of truth
+    setLikeCount(data.likes || 0)
+    
+    // Check localStorage for user's like state (for UI feedback)
     const likedTweets = getLikedTweets()
     const isLiked = likedTweets.has(data.id)
     setHasLiked(isLiked)
-    
-    // Get adjusted like count (server count + local delta)
-    const serverLikes = data.likes || 0
-    const adjustedCount = getAdjustedLikeCount(data.id, serverLikes)
-    setLikeCount(adjustedCount)
-  }, [data.id, data.likes, hasLiked]) // Added hasLiked to dependencies to update when like state changes
+  }, [data.id, data.likes])
 
 
   // Handle ESC key to close image modal and arrow keys for navigation
@@ -144,37 +143,85 @@ export default function TwitterPostFeed({
   )
 
   const handleLike = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
+    async (event: React.MouseEvent<HTMLDivElement>) => {
       event.stopPropagation()
 
       const newLikedState = !hasLiked
+      const action = newLikedState ? 'like' : 'unlike'
       
-      // Update localStorage (this also updates the delta)
-      toggleLike(data.id)
+      // Optimistically update UI
       setHasLiked(newLikedState)
+      const optimisticCount = newLikedState ? likeCount + 1 : Math.max(0, likeCount - 1)
+      setLikeCount(optimisticCount)
       
-      // Update like count using the adjusted count from localStorage
-      const serverLikes = data.likes || 0
-      const adjustedCount = getAdjustedLikeCount(data.id, serverLikes)
-      setLikeCount(adjustedCount)
+      // Update localStorage for user's like state
+      toggleLike(data.id)
+      
+      // Sync with server
+      try {
+        const response = await fetch(`/api/tweets/${data.id}/like`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ action }),
+        })
+        
+        if (!response.ok) {
+          throw new Error('Failed to update like')
+        }
+        
+        const result = await response.json()
+        if (result.success && typeof result.likes === 'number') {
+          // Update with server response
+          setLikeCount(result.likes)
+        }
+      } catch (error) {
+        // Revert optimistic update on error
+        setHasLiked(!newLikedState)
+        setLikeCount(likeCount)
+        console.error('Error updating like:', error)
+        showToast.error('Failed to update like. Please try again.')
+      }
     },
-    [hasLiked, data.id, data.likes]
+    [hasLiked, data.id, likeCount]
   )
 
   const handleShare = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
+    async (event: React.MouseEvent<HTMLDivElement>) => {
       event.stopPropagation()
       
       if (typeof window === 'undefined') return
       
       const url = `${window.location.origin}/tweet/${data.id}`
+      const title = data.author ? `${data.author} on Blog` : 'Tweet'
+      const text = data.content ? (data.content.length > 100 ? data.content.substring(0, 97) + '...' : data.content) : title
       
+      // Try native share API first (mobile devices)
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title,
+            text,
+            url,
+          })
+          return // Successfully shared
+        } catch (err) {
+          // User cancelled or share failed, fall through to clipboard
+          if ((err as Error).name === 'AbortError') {
+            return // User cancelled, don't show error
+          }
+        }
+      }
+      
+      // Fallback to clipboard
       if (navigator.clipboard?.writeText) {
-        navigator.clipboard.writeText(url).then(() => {
+        try {
+          await navigator.clipboard.writeText(url)
           showToast.success('Link copied to clipboard!')
-        }).catch(() => {
+        } catch {
           showToast.error('Failed to copy link')
-        })
+        }
       } else {
         // Fallback for older browsers
         const textArea = document.createElement('textarea')
@@ -192,7 +239,7 @@ export default function TwitterPostFeed({
         document.body.removeChild(textArea)
       }
     },
-    [data.id]
+    [data.id, data.author, data.content]
   )
 
   const handleEdit = useCallback(

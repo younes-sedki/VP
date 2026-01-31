@@ -1,9 +1,7 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
-import TwitterPostFeed from '@/components/twitter-post-feed'
+import { Metadata } from 'next'
+import { notFound } from 'next/navigation'
+import TweetDetailClient from './tweet-detail-client'
+import storage from '@/lib/supabase-storage'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,105 +12,113 @@ type TweetFromApi = {
   avatar: string
   avatarImage?: string | null
   content: string
-  image?: string | null // For backward compatibility
-  images?: string[] | null // New: array of images
+  image?: string | null
+  images?: string[] | null
+  fileType?: string | null
+  fileName?: string | null
   created_at: string
   likes: number
   edited?: boolean
   updatedAt?: string
 }
 
-export default function TweetDetailPage() {
-  const params = useParams<{ id: string }>()
-  const router = useRouter()
-  const [tweet, setTweet] = useState<TweetFromApi | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+async function getTweet(id: string): Promise<TweetFromApi | null> {
+  try {
+    const [adminData, userTweets] = await Promise.all([
+      storage.getAdminData(),
+      storage.getUserTweets()
+    ])
 
-  useEffect(() => {
-    const loadTweet = async () => {
-      if (!params.id) {
-        setError('Invalid tweet ID')
-        setLoading(false)
-        return
-      }
-
-      try {
-        setLoading(true)
-        setError(null)
-        
-        // Fetch all tweets and find the one with matching ID
-        const response = await fetch('/api/tweets')
-        if (!response.ok) {
-          throw new Error('Failed to fetch tweets')
-        }
-        
-        const data = await response.json()
-        if (data.tweets && Array.isArray(data.tweets)) {
-          const allTweets = data.tweets as TweetFromApi[]
-          // Find tweet by ID regardless of whether it's from admin or a user
-          const foundTweet = allTweets.find((t) => t.id === params.id)
-          
-          if (foundTweet) {
-            setTweet(foundTweet)
-          } else {
-            setError('Tweet not found')
-          }
-        } else {
-          setError('Tweet not found')
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load tweet')
-      } finally {
-        setLoading(false)
-      }
+    const adminTweets = adminData.adminTweets || []
+    const adminTweet = adminTweets.find((t: any) => t.id === id)
+    if (adminTweet) {
+      return adminTweet as TweetFromApi
     }
-    
-    loadTweet()
-  }, [params.id])
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
-        <p className="text-white/60 text-sm">Loading tweet…</p>
-      </main>
-    )
+    const userTweet = userTweets.find((t: any) => t.id === id)
+    if (userTweet) {
+      return userTweet as TweetFromApi
+    }
+
+    return null
+  } catch (error) {
+    console.error('Error fetching tweet:', error)
+    return null
+  }
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const tweet = await getTweet(params.id)
+  
+  if (!tweet) {
+    return {
+      title: 'Tweet not found',
+      description: 'This tweet is not available.',
+    }
   }
 
-  if (error || !tweet) {
-    return (
-      <main className="min-h-screen bg-neutral-950 text-white flex items-center justify-center px-4">
-        <div className="max-w-md text-center space-y-4">
-          <p className="text-lg font-semibold">This tweet isn&apos;t available.</p>
-          <p className="text-sm text-white/60">{error ?? 'It may have been deleted.'}</p>
-          <button
-            onClick={() => router.push('/blog')}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to blog
-          </button>
-        </div>
-      </main>
-    )
+  // Get base URL from environment or use default
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://sedkiy.dev')
+  
+  const tweetUrl = `${baseUrl}/tweet/${tweet.id}`
+  
+  // Prepare title and description
+  const title = tweet.author ? `${tweet.author} on ${tweet.handle || 'Blog'}` : 'Tweet'
+  const description = tweet.content 
+    ? (tweet.content.length > 160 ? tweet.content.substring(0, 157) + '...' : tweet.content)
+    : `A post by ${tweet.author || 'user'}`
+  
+  // Prepare image
+  let imageUrl = `${baseUrl}/og-image.png` // Default OG image
+  if (tweet.image && tweet.fileType?.startsWith('image/')) {
+    // Use tweet image if it's a full URL, otherwise construct it
+    if (tweet.image.startsWith('http://') || tweet.image.startsWith('https://')) {
+      imageUrl = tweet.image
+    } else if (tweet.image.startsWith('/')) {
+      imageUrl = `${baseUrl}${tweet.image}`
+    } else if (tweet.image.startsWith('data:image/')) {
+      // Data URLs are too long for OG tags, use default
+      imageUrl = `${baseUrl}/og-image.png`
+    }
   }
 
-  return (
-    <main className="min-h-screen bg-neutral-950 text-white">
-      <header className="border-b border-white/10 px-4 py-3 flex items-center gap-3 sticky top-0 bg-neutral-950/80 backdrop-blur-sm z-10">
-        <button
-          onClick={() => router.push('/blog')}
-          className="rounded-full p-2 hover:bg-white/10 transition-colors"
-          aria-label="Back to blog"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-lg font-semibold">Post</h1>
-      </header>
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: tweetUrl,
+      siteName: 'Younes SEDKI Portfolio',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [imageUrl],
+    },
+    alternates: {
+      canonical: tweetUrl,
+    },
+  }
+}
 
-      <section className="max-w-2xl mx-auto border-x border-white/10 min-h-[60vh]">
-        <TwitterPostFeed data={tweet} isDetailPage={true} />
-      </section>
-    </main>
-  )
+export default async function TweetDetailPage({ params }: { params: { id: string } }) {
+  const tweet = await getTweet(params.id)
+  
+  if (!tweet) {
+    notFound()
+  }
+
+  return <TweetDetailClient tweet={tweet} />
 }

@@ -64,6 +64,7 @@ export default function TwitterPostFeed({
   const [editPost, setEditPost] = useState(false)
   const [hasLiked, setHasLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(data.likes || 0)
+  const [likedByAdmin, setLikedByAdmin] = useState(data.likedByAdmin || false)
   const [imageModalOpen, setImageModalOpen] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [profileModalOpen, setProfileModalOpen] = useState(false)

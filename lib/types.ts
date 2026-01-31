@@ -43,17 +43,3 @@ export interface AuthUser {
   email: string;
   name: string;
 }
-
-// News types
-export interface NewsItem {
-  id: string;
-  title: string;
-  description: string;
-  url: string;
-  source: string;
-  author?: string;
-  publishedAt: string;
-  imageUrl?: string;
-  tags?: string[];
-  category: 'webdev' | 'ai' | 'tech' | 'general';
-}

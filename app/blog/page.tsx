@@ -2,24 +2,9 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import dynamic from "next/dynamic"
 import { ArrowLeft } from "lucide-react"
 import AnimatedHeading from "@/components/animated-heading"
 import { BlogTweetSection } from "@/components/blog-tweet-section"
-
-// Dynamically import NewsFeed with SSR disabled to prevent layout router issues
-const NewsFeed = dynamic(
-  () => import("@/components/news-feed"),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="px-4 py-10 text-center text-white/60 text-sm">
-        <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white/30 mb-2"></div>
-        <p>Loading news...</p>
-      </div>
-    ),
-  }
-)
 
 export default function BlogPage() {
   const [mounted, setMounted] = useState(false)
@@ -61,22 +46,6 @@ export default function BlogPage() {
         </header>
 
         <BlogTweetSection />
-
-        {/* News Section */}
-        <section
-          aria-label="Latest tech news"
-          className="rounded-3xl border border-white/10 bg-neutral-900/60 overflow-hidden"
-        >
-          <div className="border-b border-white/10 px-4 py-4">
-            <h2 className="text-xl font-semibold mb-1">Tech & AI News</h2>
-            <p className="text-sm text-white/60">
-              Latest web development, AI, and tech news from Dev.to, Hacker News, and more.
-            </p>
-          </div>
-          <div className="py-4">
-            <NewsFeed category="all" limit={15} showCategoryFilter={true} />
-          </div>
-        </section>
       </div>
     </main>
   )

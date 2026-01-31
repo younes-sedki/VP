@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation'
 import { RichTextContent } from './rich-text-content'
 import ProfileModal from './profile-modal'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { ADMIN_CONFIG } from '@/lib/admin-config'
 
 const ADMIN_DISPLAY_NAME = 'Younes Sedki'
 const ADMIN_HANDLE = 'younes-sedki'
@@ -39,6 +40,7 @@ interface TwitterPostFeedProps {
     fileName?: string | null
     created_at: string
     likes: number
+    likedByAdmin?: boolean // Track if admin liked this tweet
     edited?: boolean
     updatedAt?: string
     comments?: { author: string; content: string; timestamp?: string }[]
@@ -579,23 +581,42 @@ export default function TwitterPostFeed({
                   Share this tweet
                 </TooltipContent>
               </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    className="flex flex-row items-center text-white/60 gap-1 cursor-pointer transition hover:text-red-400"
-                    onClick={handleLike}
-                  >
-                    <LikeIcon
-                      size={14}
-                      className={hasLiked ? 'text-red-400' : 'text-white/60'}
-                    />
-                    <p className="text-xs">{likeCount}</p>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10">
-                  {hasLiked ? 'Unlike this tweet' : 'Like this tweet'}
-                </TooltipContent>
-              </Tooltip>
+              <div className="flex flex-row items-center text-white/60 gap-1.5">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className="flex flex-row items-center gap-1 cursor-pointer transition hover:text-red-400"
+                      onClick={handleLike}
+                    >
+                      <LikeIcon
+                        size={14}
+                        className={hasLiked ? 'text-red-400' : 'text-white/60'}
+                      />
+                      <p className="text-xs">{likeCount}</p>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10">
+                    {hasLiked ? 'Unlike this tweet' : 'Like this tweet'}
+                  </TooltipContent>
+                </Tooltip>
+                {/* Admin badge when admin liked a user tweet */}
+                {data.avatar === 'user' && data.likedByAdmin && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="relative cursor-help">
+                        <img
+                          src={ADMIN_CONFIG.profilePicture}
+                          alt="Admin liked"
+                          className="w-4 h-4 rounded-full border border-emerald-500/50 bg-emerald-500/20"
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10 text-xs">
+                      Admin liked this
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
             </div>
           </div>
           {isOwner && (

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit'
 import { sanitizeInput } from '@/lib/validation'
 import storage from '@/lib/supabase-storage'
+import { getAdminCookieName, verifyAdminSessionToken } from '@/lib/admin-session'
 
 // CORS headers helper
 function corsHeaders() {
@@ -56,6 +58,11 @@ export async function POST(
     const body = await request.json().catch(() => ({}))
     const action = body.action === 'unlike' ? 'unlike' : 'like' // Default to 'like'
 
+    // Check if requester is admin
+    const cookieStore = await cookies()
+    const adminToken = cookieStore.get(getAdminCookieName())?.value
+    const isAdmin = verifyAdminSessionToken(adminToken)
+
     // Fetch all tweets to find the one to update
     const [adminData, userTweets] = await Promise.all([
       storage.getAdminData(),
@@ -82,6 +89,15 @@ export async function POST(
     const currentLikes = tweet.likes || 0
     const newLikes = action === 'like' ? currentLikes + 1 : Math.max(0, currentLikes - 1)
     
+    // Track admin likes for user tweets
+    let likedByAdmin = false
+    if (!isAdminTweet && isAdmin) {
+      likedByAdmin = action === 'like'
+    } else if (!isAdminTweet && tweet.likedByAdmin) {
+      // Preserve existing admin like status if not admin
+      likedByAdmin = tweet.likedByAdmin
+    }
+    
     // Use direct Supabase update for better performance and reliability
     const { createClient } = await import('@supabase/supabase-js')
     const supabaseUrl = process.env.TWEET_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -92,9 +108,14 @@ export async function POST(
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
       const tableName = isAdminTweet ? 'admin_tweets' : 'user_tweets'
       
+      const updateData: any = { likes: newLikes }
+      if (!isAdminTweet) {
+        updateData.likedByAdmin = likedByAdmin
+      }
+      
       const { error } = await supabase
         .from(tableName)
-        .update({ likes: newLikes })
+        .update(updateData)
         .eq('id', tweetId)
       
       if (error) {
@@ -103,7 +124,10 @@ export async function POST(
       }
     } else {
       // Fallback to storage methods (for local development)
-      const updatedTweet = { ...tweet, likes: newLikes }
+      const updatedTweet: any = { ...tweet, likes: newLikes }
+      if (!isAdminTweet) {
+        updatedTweet.likedByAdmin = likedByAdmin
+      }
 
       if (isAdminTweet) {
         const updatedAdminTweets = adminTweets.map((t: any) => 
@@ -125,6 +149,7 @@ export async function POST(
       { 
         success: true, 
         likes: newLikes,
+        likedByAdmin: !isAdminTweet ? likedByAdmin : undefined,
         action 
       },
       {

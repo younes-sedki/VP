@@ -15,6 +15,7 @@ import {
   FileText,
   FileImage,
 } from "lucide-react"
+import { RiHeart3Line, RiHeart3Fill } from "react-icons/ri"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -38,6 +39,8 @@ type UserTweet = {
   handle: string
   content: string
   created_at: string
+  likes?: number
+  likedByAdmin?: boolean
 }
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // 5MB for images
@@ -717,30 +720,87 @@ export default function AdminLoginPage() {
               {userTweets.slice(0, 15).map((t) => (
                 <div
                   key={t.id}
-                  className="p-3 rounded-xl border border-white/10 bg-neutral-950/70 space-y-2"
+                  className={`p-4 rounded-xl border ${
+                    (t as any).likedByAdmin
+                      ? 'border-emerald-500/30 bg-emerald-500/5'
+                      : 'border-white/10 bg-neutral-950/70'
+                  } space-y-3 transition-all hover:border-white/20`}
                 >
-                  <div className="text-xs text-white/60">
-                    <span className="font-semibold text-white">{t.author}</span>{' '}
-                    <span className="text-white/50">@{t.handle}</span>{' '}
-                    <span className="text-white/40">
-                      · {new Date(t.created_at).toLocaleString()}
-                    </span>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="font-semibold text-white text-sm">{t.author}</span>
+                        <span className="text-white/50 text-xs">@{t.handle}</span>
+                        {(t as any).likedByAdmin && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] text-emerald-300">
+                            <RiHeart3Fill className="w-2.5 h-2.5" />
+                            Admin liked
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-white/40 text-xs">
+                        {new Date(t.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    {(t as any).likes !== undefined && (t as any).likes > 0 && (
+                      <div className="flex items-center gap-1 text-xs text-white/60">
+                        <RiHeart3Line className="w-3.5 h-3.5" />
+                        <span>{(t as any).likes}</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-sm text-white/90 whitespace-pre-wrap">
-                    {t.content}
+                  <div className="text-sm text-white/90 whitespace-pre-wrap leading-relaxed">
+                    <RichTextContent content={t.content} />
                   </div>
                   <div className="flex items-center justify-between gap-2 pt-1">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      className="rounded-full h-8 px-3 text-xs bg-emerald-500/10 text-emerald-100 border border-emerald-500/40 hover:bg-emerald-500/25"
-                      onClick={() =>
-                        setReplyingToId((current) => (current === t.id ? null : t.id))
-                      }
-                    >
-                      Reply as admin
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="rounded-full h-8 px-3 text-xs bg-emerald-500/10 text-emerald-100 border border-emerald-500/40 hover:bg-emerald-500/25"
+                        onClick={() =>
+                          setReplyingToId((current) => (current === t.id ? null : t.id))
+                        }
+                      >
+                        Reply as admin
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className={`rounded-full h-8 px-3 text-xs flex items-center gap-1.5 ${
+                          (t as any).likedByAdmin
+                            ? 'text-red-400 bg-red-500/10 border border-red-500/40'
+                            : 'text-white/60 hover:text-red-400 hover:bg-red-500/10'
+                        }`}
+                        disabled={likingTweetId === t.id}
+                        onClick={async () => {
+                          setLikingTweetId(t.id)
+                          try {
+                            const action = (t as any).likedByAdmin ? 'unlike' : 'like'
+                            const response = await fetch(`/api/tweets/${t.id}/like`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ action }),
+                            })
+                            if (!response.ok) throw new Error('Failed to like')
+                            await fetchAdminTweets()
+                          } catch (err) {
+                            console.error('Error liking tweet:', err)
+                          } finally {
+                            setLikingTweetId(null)
+                          }
+                        }}
+                      >
+                        {(t as any).likedByAdmin ? (
+                          <RiHeart3Fill className="w-3.5 h-3.5" />
+                        ) : (
+                          <RiHeart3Line className="w-3.5 h-3.5" />
+                        )}
+                        <span>{(t as any).likes || 0}</span>
+                      </Button>
+                    </div>
                     <Button
                       type="button"
                       size="sm"

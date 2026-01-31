@@ -35,6 +35,7 @@ export interface UserTweet {
   created_at: string
   updatedAt?: string | null
   likes?: number
+  likedByAdmin?: boolean // Track if admin liked this tweet
   comments?: any[]
   retweets?: number
   replies?: number

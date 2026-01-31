@@ -195,6 +195,16 @@ export function validateUsername(username: string): { valid: boolean; error?: st
     return { valid: false, error: 'This username is reserved' }
   }
 
+  // Check for bad words in username
+  try {
+    if (containsBadWords(cleaned)) {
+      return { valid: false, error: 'Username contains inappropriate language' }
+    }
+  } catch (error) {
+    // If bad-words module can't be loaded, continue with other checks
+    console.warn('Could not check bad words in username:', error)
+  }
+
   return { valid: true }
 }
 
@@ -226,6 +236,16 @@ export function validateDisplayName(displayName: string): { valid: boolean; erro
     if (lowerCleaned.includes(reservedName.toLowerCase())) {
       return { valid: false, error: 'Display name cannot contain reserved names' }
     }
+  }
+
+  // Check for bad words in display name
+  try {
+    if (containsBadWords(cleaned)) {
+      return { valid: false, error: 'Display name contains inappropriate language' }
+    }
+  } catch (error) {
+    // If bad-words module can't be loaded, continue with other checks
+    console.warn('Could not check bad words in display name:', error)
   }
 
   return { valid: true }

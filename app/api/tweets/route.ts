@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit'
 import { sanitizeInput, validateTweetContent, validateCommentContent, validateEmailFormat, validateDisplayName, validateUrl } from '@/lib/validation'
+import { containsBadWords } from '@/lib/bad-words'
 import { TWEET_CONFIG } from '@/lib/config'
 import { ADMIN_CONFIG } from '@/lib/admin-config'
 import { getAdminCookieName, verifyAdminSessionToken } from '@/lib/admin-session'
@@ -513,6 +514,15 @@ export async function POST(request: NextRequest) {
     if (!contentValidation.valid) {
       return NextResponse.json(
         { error: contentValidation.error },
+        { status: 400, headers: corsHeaders() }
+      )
+    }
+
+    // Additional content moderation check for bad words
+    const contentToCheck = `${content} ${author} ${handle}`
+    if (containsBadWords(contentToCheck)) {
+      return NextResponse.json(
+        { error: 'Content contains inappropriate language and cannot be posted.' },
         { status: 400, headers: corsHeaders() }
       )
     }

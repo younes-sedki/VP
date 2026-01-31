@@ -13,7 +13,6 @@ import SkillsSection from "@/components/skills-section"
 import ContactSection from "@/components/contact-section"
 import TerminalAnimation from "@/components/terminal-animation"
 import ProjectsSection from "@/components/projects-section"
-import HomeSuggestions from "@/components/home-suggestions"
 
 export const dynamic = 'force-dynamic'
 
@@ -152,8 +151,6 @@ export default function Page() {
 
       {SHOW_SECTIONS.projects && <ProjectsSection />}
       {SHOW_SECTIONS.skills && <SkillsSection />}
-      
-      <HomeSuggestions />
       
       {SHOW_SECTIONS.contact && <ContactSection />}
     </main>

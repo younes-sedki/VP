@@ -55,6 +55,7 @@ function loadBadWords(): string[] {
 
 /**
  * Fallback bad words list (used if file can't be loaded)
+ * This list is now the primary source to ensure production reliability
  */
 function getFallbackBadWords(): string[] {
   return [
@@ -70,21 +71,50 @@ function getFallbackBadWords(): string[] {
     'human-trafficking', 'prostitution', 'gambling', 'casino', 'betting',
     'lottery', 'cheat', 'steal', 'robbery', 'theft', 'burglary', 'extortion',
     'blackmail', 'bribery', 'corruption', 'money-laundering', 'pyramid-scheme',
-    'ponzi', 'get-rich-quick', 'make-money-fast'
+    'ponzi', 'get-rich-quick', 'make-money-fast', 'work-from-home-scam',
+    'investment-scam', 'crypto-scam', 'bitcoin-scam', 'nigerian-prince',
+    'phishing-email', 'fake-check', 'fake-invoice', 'fake-warrant', 'irs-scam',
+    'tax-scam', 'social-security-scam', 'medicare-scam', 'tech-support-scam',
+    'romance-scam', 'catfishing', 'identity-theft', 'credit-card-fraud',
+    'bank-fraud', 'wire-fraud', 'mail-fraud', 'insurance-fraud',
+    'healthcare-fraud', 'elder-abuse', 'elder-financial-abuse', 'senior-scam',
+    'grandparent-scam', 'relative-scam', 'family-emergency-scam', 'jail-scam',
+    'arrest-scam', 'bail-scam', 'court-scam', 'lawsuit-scam', 'legal-scam',
+    'debt-collection-scam', 'debt-settlement-scam', 'credit-repair-scam',
+    'account-suspension-scam', 'service-cancellation-scam', 'subscription-scam',
+    'auto-renewal-scam', 'billing-scam', 'charge-scam', 'refund-scam',
+    'warranty-claim-scam', 'recall-scam', 'class-action-scam', 'settlement-scam',
+    'lawsuit-settlement-scam', 'mass-tort-scam', 'prize-scam', 'sweepstakes-scam',
+    'inheritance-scam', 'unclaimed-funds-scam', 'tax-refund-scam', 'rebate-scam',
+    'warranty-scam', 'extended-warranty-scam', 'insurance-scam', 'medical-device-scam',
+    'prescription-drug-scam', 'funeral-scam', 'estate-planning-scam', 'will-scam',
+    'trust-scam', 'probate-scam', 'home-repair-scam', 'roofing-scam', 'hvac-scam',
+    'plumbing-scam', 'electrical-scam', 'pest-control-scam', 'landscaping-scam',
+    'car-scam', 'vehicle-scam', 'boat-scam', 'rv-scam', 'pet-scam', 'puppy-scam',
+    'ticket-scam', 'travel-scam', 'vacation-scam', 'hotel-scam', 'airline-scam',
+    'package-scam', 'online-auction-scam', 'rental-scam', 'apartment-scam',
+    'real-estate-scam', 'property-scam', 'job-scam', 'employment-scam',
+    'work-permit-scam', 'scholarship-scam', 'student-loan-scam', 'debt-relief-scam',
+    'mortgage-scam', 'refinance-scam', 'foreclosure-scam', 'charity-scam',
+    'donation-scam', 'crowdfunding-scam', 'dating-site-scam', 'marriage-scam',
+    'immigration-scam', 'visa-scam', 'zabi', 'zbi', 'zaml', 'w9', 'b9', 'wld',
+    'zml', 'krk', 'ass', 'zebi', 'zamle', 'zamal', 'wald9', 'wld9', '9a7ba',
+    '97ba', 'l7wa'
   ]
 }
 
 /**
  * Get bad words list (works on both server and client)
+ * Always use embedded list for production reliability
  */
 export function getBadWords(): string[] {
-  if (typeof window === 'undefined') {
-    // Server-side: load from file
-    return loadBadWords()
-  } else {
-    // Client-side: use fallback (or could fetch from API)
-    return getFallbackBadWords()
+  if (badWordsCache) {
+    return badWordsCache
   }
+  
+  // Always use the embedded list for reliability
+  badWordsCache = getFallbackBadWords()
+  return badWordsCache
 }
 
 /**
@@ -97,15 +127,29 @@ export function containsBadWords(content: string): boolean {
 
   const lowerContent = content.toLowerCase()
   const badWords = getBadWords()
+  
+  // Debug logging
+  console.log(`[BAD_WORDS_DEBUG] Checking: "${content}" -> "${lowerContent}"`)
+  console.log(`[BAD_WORDS_DEBUG] Available words: ${badWords.length}`)
 
-  // Check for whole word matches (with word boundaries)
+  // Check for bad words (both whole word and substring matches for short words)
   for (const word of badWords) {
-    // Create regex with word boundaries to match whole words only
-    const regex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
-    if (regex.test(lowerContent)) {
-      return true
+    // For short words (3 chars or less), check substring matches
+    if (word.length <= 3) {
+      if (lowerContent.includes(word)) {
+        console.log(`[BAD_WORDS_DEBUG] FOUND SHORT WORD: "${word}" in "${lowerContent}"`)
+        return true
+      }
+    } else {
+      // For longer words, use word boundaries for more precise matching
+      const regex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+      if (regex.test(lowerContent)) {
+        console.log(`[BAD_WORDS_DEBUG] FOUND LONG WORD: "${word}" in "${lowerContent}"`)
+        return true
+      }
     }
   }
 
+  console.log(`[BAD_WORDS_DEBUG] NO BAD WORDS FOUND`)
   return false
 }

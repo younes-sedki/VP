@@ -11,7 +11,7 @@ import {
   RiEditLine,
   RiShareLine,
 } from 'react-icons/ri'
-import { BadgeCheck, FileText, FileImage, Download } from 'lucide-react'
+import { BadgeCheck, FileText, FileImage, Download, Star } from 'lucide-react'
 
 import TwitterAvatar from './twitter-avatar'
 import { useTweets } from '@/hooks/use-tweets'
@@ -88,12 +88,13 @@ export default function TwitterPostFeed({
     
     // Use server likes as the source of truth
     setLikeCount(data.likes || 0)
+    setLikedByAdmin(data.likedByAdmin || false)
     
     // Check localStorage for user's like state (for UI feedback)
     const likedTweets = getLikedTweets()
     const isLiked = likedTweets.has(data.id)
     setHasLiked(isLiked)
-  }, [data.id, data.likes])
+  }, [data.id, data.likes, data.likedByAdmin])
 
 
   // Handle ESC key to close image modal and arrow keys for navigation
@@ -599,20 +600,19 @@ export default function TwitterPostFeed({
                     {hasLiked ? 'Unlike this tweet' : 'Like this tweet'}
                   </TooltipContent>
                 </Tooltip>
-                {/* Admin badge when admin liked a user tweet */}
-                {data.avatar === 'user' && data.likedByAdmin && (
+                {/* Admin like indicator when admin liked a user tweet */}
+                {data.avatar === 'user' && likedByAdmin && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="relative cursor-help">
-                        <img
-                          src={ADMIN_CONFIG.profilePicture}
-                          alt="Admin liked"
-                          className="w-4 h-4 rounded-full border border-emerald-500/50 bg-emerald-500/20"
+                      <div className="flex items-center cursor-help">
+                        <Star 
+                          className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400/30" 
+                          strokeWidth={2.5}
                         />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10 text-xs">
-                      Admin liked this
+                      Liked by {ADMIN_CONFIG.name}
                     </TooltipContent>
                   </Tooltip>
                 )}

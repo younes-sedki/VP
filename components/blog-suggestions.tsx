@@ -1,6 +1,6 @@
 'use client'
 
-import { Sparkles, Code, Zap, BookOpen, Lightbulb, Rocket } from 'lucide-react'
+import { Sparkles, Code, Zap, BookOpen, Lightbulb, Rocket, Database, Shield, GitBranch, Globe, Terminal, Cpu } from 'lucide-react'
 import Link from 'next/link'
 
 const suggestions = [
@@ -43,6 +43,46 @@ const suggestions = [
     color: 'text-yellow-400',
     bgColor: 'bg-yellow-500/10',
     borderColor: 'border-yellow-500/30',
+  },
+  {
+    icon: Database,
+    title: 'Database & Backend',
+    description: 'Database design, optimization, and backend architecture patterns.',
+    color: 'text-cyan-400',
+    bgColor: 'bg-cyan-500/10',
+    borderColor: 'border-cyan-500/30',
+  },
+  {
+    icon: Shield,
+    title: 'Security Best Practices',
+    description: 'Web security, authentication, and protecting your applications.',
+    color: 'text-red-400',
+    bgColor: 'bg-red-500/10',
+    borderColor: 'border-red-500/30',
+  },
+  {
+    icon: GitBranch,
+    title: 'DevOps & CI/CD',
+    description: 'Deployment strategies, automation, and infrastructure as code.',
+    color: 'text-indigo-400',
+    bgColor: 'bg-indigo-500/10',
+    borderColor: 'border-indigo-500/30',
+  },
+  {
+    icon: Globe,
+    title: 'Web Performance',
+    description: 'Optimizing load times, Core Web Vitals, and user experience.',
+    color: 'text-green-400',
+    bgColor: 'bg-green-500/10',
+    borderColor: 'border-green-500/30',
+  },
+  {
+    icon: Terminal,
+    title: 'Command Line & Tools',
+    description: 'Terminal tips, CLI tools, and developer utilities.',
+    color: 'text-pink-400',
+    bgColor: 'bg-pink-500/10',
+    borderColor: 'border-pink-500/30',
   },
 ]
 

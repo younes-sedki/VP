@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRight, Code, Sparkles, TrendingUp, Users, Target } from 'lucide-react'
+import { ArrowRight, Code, Sparkles, TrendingUp, Users, Target, Database, Shield, GitBranch, Globe, Zap } from 'lucide-react'
 import Link from 'next/link'
 
 const suggestions = [
@@ -40,6 +40,42 @@ const suggestions = [
     bgColor: 'bg-orange-500/10',
     borderColor: 'border-orange-500/30',
   },
+  {
+    icon: Database,
+    title: 'Backend Architecture',
+    description: 'Designing scalable APIs, databases, and server infrastructure.',
+    href: '/blog',
+    color: 'text-cyan-400',
+    bgColor: 'bg-cyan-500/10',
+    borderColor: 'border-cyan-500/30',
+  },
+  {
+    icon: Shield,
+    title: 'Security & Best Practices',
+    description: 'Implementing security measures and following industry standards.',
+    href: '/blog',
+    color: 'text-red-400',
+    bgColor: 'bg-red-500/10',
+    borderColor: 'border-red-500/30',
+  },
+  {
+    icon: GitBranch,
+    title: 'DevOps & Deployment',
+    description: 'CI/CD pipelines, containerization, and cloud infrastructure.',
+    href: '/blog',
+    color: 'text-indigo-400',
+    bgColor: 'bg-indigo-500/10',
+    borderColor: 'border-indigo-500/30',
+  },
+  {
+    icon: Zap,
+    title: 'AI Integration',
+    description: 'Leveraging AI tools and APIs to enhance applications.',
+    href: '/blog',
+    color: 'text-yellow-400',
+    bgColor: 'bg-yellow-500/10',
+    borderColor: 'border-yellow-500/30',
+  },
 ]
 
 export default function HomeSuggestions() {
@@ -58,7 +94,7 @@ export default function HomeSuggestions() {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {suggestions.map((suggestion, index) => {
             const Icon = suggestion.icon
             return (

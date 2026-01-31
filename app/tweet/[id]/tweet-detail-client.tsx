@@ -105,10 +105,8 @@ export default function TweetDetailClient({ tweet }: { tweet: TweetFromApi }) {
           </div>
         </div>
 
-        {/* Tweet Content - TwitterPostFeed will handle the content display */}
-        <div>
-          <TwitterPostFeed data={tweet} isDetailPage={true} />
-        </div>
+        {/* Tweet Content - TwitterPostFeed will handle the content display without duplicate header */}
+        <TwitterPostFeed data={tweet} isDetailPage={true} />
       </section>
     </main>
   )

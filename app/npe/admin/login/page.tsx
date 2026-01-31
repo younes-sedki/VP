@@ -128,7 +128,7 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     let mounted = true
-    let timeoutId: NodeJS.Timeout | null = null
+    let intervalId: number | null = null
     
     const checkAuth = async () => {
       try {
@@ -143,10 +143,13 @@ export default function AdminLoginPage() {
         setLoggedIn(isLoggedIn)
         
         // If logged in, verify session is still valid periodically
-        if (isLoggedIn) {
+        if (isLoggedIn && mounted) {
           // Re-check auth every 5 minutes to catch expired sessions
-          timeoutId = setInterval(async () => {
-            if (!mounted) return
+          intervalId = setInterval(async () => {
+            if (!mounted) {
+              if (intervalId) clearInterval(intervalId)
+              return
+            }
             try {
               const recheckRes = await fetch('/api/admin/me', { 
                 cache: 'no-store',
@@ -157,6 +160,10 @@ export default function AdminLoginPage() {
               const stillLoggedIn = Boolean(recheckData?.loggedIn)
               if (!stillLoggedIn && mounted) {
                 setLoggedIn(false)
+                if (intervalId) {
+                  clearInterval(intervalId)
+                  intervalId = null
+                }
               }
             } catch (err) {
               console.error('Auth recheck failed:', err)
@@ -177,7 +184,10 @@ export default function AdminLoginPage() {
     
     return () => {
       mounted = false
-      if (timeoutId) clearInterval(timeoutId)
+      if (intervalId) {
+        clearInterval(intervalId)
+        intervalId = null
+      }
     }
   }, [])
 

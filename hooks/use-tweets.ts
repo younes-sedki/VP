@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import type { Tweet } from '@/lib/types'
 import { CACHE_CONFIG } from '@/lib/config'
+import { getCsrfToken } from '@/lib/csrf-client'
 
 export function useTweets() {
   const [tweets, setTweets] = useState<Tweet[]>([])
@@ -77,6 +78,9 @@ export function useTweets() {
 
   // Create a new tweet with optimistic update
   const createTweet = useCallback(async (content: string, author: string, handle: string, email?: string) => {
+    // Get CSRF token for production
+    const csrfToken = process.env.NODE_ENV === 'production' ? await getCsrfToken() : null
+    
     // Optimistic update
     const tempId = `temp-${Date.now()}`
     const optimisticTweet = {
@@ -96,9 +100,14 @@ export function useTweets() {
     setTweets(prev => [optimisticTweet, ...prev])
     
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken
+      }
+      
       const response = await fetch('/api/tweets', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ content, author, handle, email })
       })
       
@@ -138,6 +147,9 @@ export function useTweets() {
 
   // Update tweet (likes, comments, etc) with optimistic update
   const updateTweet = useCallback(async (tweetId: string, updates: Partial<Tweet>, isAdmin = false) => {
+    // Get CSRF token for production
+    const csrfToken = process.env.NODE_ENV === 'production' ? await getCsrfToken() : null
+    
     // Optimistic update
     const previousTweets = [...tweets]
     setTweets(prev =>
@@ -147,9 +159,14 @@ export function useTweets() {
     )
     
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken
+      }
+      
       const response = await fetch('/api/tweets', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ tweetId, isAdmin, ...updates })
       })
       
@@ -169,6 +186,9 @@ export function useTweets() {
 
   // Edit tweet (content only, within 1 hour)
   const editTweet = useCallback(async (tweetId: string, newContent: string, isAdmin = false) => {
+    // Get CSRF token for production
+    const csrfToken = process.env.NODE_ENV === 'production' ? await getCsrfToken() : null
+    
     // Optimistic update
     const previousTweets = [...tweets]
     setTweets(prev =>
@@ -180,9 +200,14 @@ export function useTweets() {
     )
     
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken
+      }
+      
       const response = await fetch('/api/tweets', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ tweetId, content: newContent, isAdmin })
       })
       
@@ -216,10 +241,18 @@ export function useTweets() {
 
   // Delete a tweet
   const deleteTweet = useCallback(async (tweetId: string, isAdmin = false) => {
+    // Get CSRF token for production
+    const csrfToken = process.env.NODE_ENV === 'production' ? await getCsrfToken() : null
+    
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken
+      }
+      
       const response = await fetch('/api/tweets', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ tweetId, isAdmin })
       })
       

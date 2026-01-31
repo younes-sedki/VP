@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit'
-import { sanitizeInput, validateTweetContent, validateCommentContent, validateEmailFormat } from '@/lib/validation'
+import { sanitizeInput, validateTweetContent, validateCommentContent, validateEmailFormat, validateDisplayName, validateUrl } from '@/lib/validation'
 import { TWEET_CONFIG } from '@/lib/config'
 import { ADMIN_CONFIG } from '@/lib/admin-config'
 import { getAdminCookieName, verifyAdminSessionToken } from '@/lib/admin-session'
+import { validateCsrfToken, verifyOrigin } from '@/lib/csrf'
 import storage from '@/lib/supabase-storage'
 
 // CORS headers helper
@@ -45,10 +46,10 @@ export async function GET(request: NextRequest) {
         status: 429,
         headers: {
           ...corsHeaders(),
-          'X-RateLimit-Limit': RATE_LIMITS.default.max.toString(),
+          'X-RateLimit-Limit': rateLimit.limit.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
-          'X-RateLimit-Reset': rateLimit.resetTime.toString(),
-          'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString(),
+          'X-RateLimit-Reset': rateLimit.reset.toString(),
+          'Retry-After': rateLimit.reset.toString(),
         }
       }
     )
@@ -185,10 +186,10 @@ export async function PUT(request: NextRequest) {
         status: 429,
         headers: {
           ...corsHeaders(),
-          'X-RateLimit-Limit': RATE_LIMITS.commentTweet.max.toString(),
+          'X-RateLimit-Limit': rateLimit.limit.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
-          'X-RateLimit-Reset': rateLimit.resetTime.toString(),
-          'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString(),
+          'X-RateLimit-Reset': rateLimit.reset.toString(),
+          'Retry-After': rateLimit.reset.toString(),
         }
       }
     )
@@ -342,10 +343,10 @@ export async function PATCH(request: NextRequest) {
         status: 429,
         headers: {
           ...corsHeaders(),
-          'X-RateLimit-Limit': RATE_LIMITS.commentTweet.max.toString(),
+          'X-RateLimit-Limit': rateLimit.limit.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
-          'X-RateLimit-Reset': rateLimit.resetTime.toString(),
-          'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString(),
+          'X-RateLimit-Reset': rateLimit.reset.toString(),
+          'Retry-After': rateLimit.reset.toString(),
         }
       }
     )
@@ -447,6 +448,32 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // CSRF Protection (only for state-changing operations)
+  // Note: CSRF validation is optional in development for easier testing
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      if (!(await validateCsrfToken(request))) {
+        return NextResponse.json(
+          { error: 'Invalid CSRF token' },
+          { status: 403, headers: corsHeaders() }
+        )
+      }
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'CSRF validation failed' },
+        { status: 403, headers: corsHeaders() }
+      )
+    }
+
+    // Verify origin in production
+    if (!verifyOrigin(request)) {
+      return NextResponse.json(
+        { error: 'Invalid origin' },
+        { status: 403, headers: corsHeaders() }
+      )
+    }
+  }
+
   // Rate limiting
   const clientId = getClientIdentifier(request)
   const rateLimit = checkRateLimit(clientId, RATE_LIMITS.createTweet)
@@ -458,10 +485,10 @@ export async function POST(request: NextRequest) {
         status: 429,
         headers: {
           ...corsHeaders(),
-          'X-RateLimit-Limit': RATE_LIMITS.createTweet.max.toString(),
+          'X-RateLimit-Limit': rateLimit.limit.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
-          'X-RateLimit-Reset': rateLimit.resetTime.toString(),
-          'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString(),
+          'X-RateLimit-Reset': rateLimit.reset.toString(),
+          'Retry-After': rateLimit.reset.toString(),
         }
       }
     )
@@ -477,7 +504,9 @@ export async function POST(request: NextRequest) {
     const author = sanitizeInput(body.author || '')
     const handle = sanitizeInput(body.handle || '')
     const email = sanitizeInput(body.email || '')
-    const imageUrl = sanitizeImageUrl(body.imageUrl || null)
+    const imageUrl = sanitizeImageUrl(body.imageUrl || body.fileUrl || null)
+    const fileType = body.fileType || (imageUrl ? 'image' : null)
+    const fileName = sanitizeInput(body.fileName || '')
 
     // Validate tweet content
     const contentValidation = validateTweetContent(content)
@@ -516,6 +545,8 @@ export async function POST(request: NextRequest) {
         avatarImage: null,
         content,
         image: imageUrl,
+        fileType: fileType || null,
+        fileName: fileName || null,
         created_at: new Date().toISOString(),
         updatedAt: null,
         likes: 0,
@@ -525,13 +556,24 @@ export async function POST(request: NextRequest) {
       }
 
       await storage.addAdminTweet(newTweet)
-      return NextResponse.json({ success: true, tweet: newTweet }, { headers: corsHeaders() })
+      return NextResponse.json(
+        { success: true, tweet: newTweet },
+        {
+          headers: {
+            ...corsHeaders(),
+            'X-RateLimit-Limit': rateLimit.limit.toString(),
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': rateLimit.reset.toString(),
+          }
+        }
+      )
     }
 
-    // Validate author and handle for user posts
-    if (!author || author.length < 1 || author.length > 50) {
+    // Validate author (display name) and handle for user posts
+    const displayNameValidation = validateDisplayName(author)
+    if (!displayNameValidation.valid) {
       return NextResponse.json(
-        { error: 'Author name must be between 1 and 50 characters' },
+        { error: displayNameValidation.error || 'Invalid display name' },
         { status: 400, headers: corsHeaders() }
       )
     }
@@ -566,7 +608,17 @@ export async function POST(request: NextRequest) {
     // Add to storage
     await storage.addUserTweet(newTweet)
 
-    return NextResponse.json({ success: true, tweet: newTweet }, { headers: corsHeaders() })
+    return NextResponse.json(
+      { success: true, tweet: newTweet },
+      {
+        headers: {
+          ...corsHeaders(),
+          'X-RateLimit-Limit': rateLimit.limit.toString(),
+          'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+          'X-RateLimit-Reset': rateLimit.reset.toString(),
+        }
+      }
+    )
   } catch (error) {
     console.error('Error creating tweet:', error)
     const message = error instanceof Error ? error.message : 'Failed to create tweet'
@@ -600,9 +652,9 @@ export async function DELETE(request: NextRequest) {
         status: 429,
         headers: {
           ...corsHeaders(),
-          'X-RateLimit-Limit': RATE_LIMITS.default.max.toString(),
+          'X-RateLimit-Limit': rateLimit.limit.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
-          'X-RateLimit-Reset': rateLimit.resetTime.toString(),
+          'X-RateLimit-Reset': rateLimit.reset.toString(),
         }
       }
     )

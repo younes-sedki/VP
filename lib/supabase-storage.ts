@@ -14,6 +14,8 @@ export interface AdminTweet {
   avatarImage?: string | null
   content: string
   image?: string | null
+  fileType?: 'image' | 'pdf' | 'gif' | null
+  fileName?: string | null
   created_at: string
   updatedAt?: string | null
   likes?: number

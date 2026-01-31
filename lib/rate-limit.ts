@@ -42,11 +42,18 @@ export const RATE_LIMITS = {
 
 /**
  * Check if request should be rate limited
+ * Returns rate limit info with headers for responses
  */
 export function checkRateLimit(
   identifier: string,
   limit: { max: number; window: number } = RATE_LIMITS.default
-): { allowed: boolean; remaining: number; resetTime: number } {
+): { 
+  allowed: boolean
+  remaining: number
+  resetTime: number
+  limit: number
+  reset: number
+} {
   // Initialize cleanup only when the function is actually used
   initCleanup()
   
@@ -63,6 +70,8 @@ export function checkRateLimit(
       allowed: true,
       remaining: limit.max - 1,
       resetTime: store[key].resetTime,
+      limit: limit.max,
+      reset: Math.ceil((store[key].resetTime - now) / 1000),
     }
   }
 
@@ -71,6 +80,8 @@ export function checkRateLimit(
       allowed: false,
       remaining: 0,
       resetTime: store[key].resetTime,
+      limit: limit.max,
+      reset: Math.ceil((store[key].resetTime - now) / 1000),
     }
   }
 
@@ -79,6 +90,8 @@ export function checkRateLimit(
     allowed: true,
     remaining: limit.max - store[key].count,
     resetTime: store[key].resetTime,
+    limit: limit.max,
+    reset: Math.ceil((store[key].resetTime - now) / 1000),
   }
 }
 

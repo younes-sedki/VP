@@ -1,7 +1,7 @@
 {
-  "buildCommand": "node scripts/remove-problematic-packages.js && pnpm run build",
+  "buildCommand": "node scripts/remove-problematic-packages.js && npm run build",
   "outputDirectory": ".next",
-  "installCommand": "pnpm install && node scripts/remove-problematic-packages.js",
+  "installCommand": "npm install && node scripts/remove-problematic-packages.js",
   "framework": "nextjs",
   "env": {
     "NEXT_PUBLIC_APP_URL": "https://www.sedkiy.dev",

@@ -7,7 +7,7 @@ import 'react-circular-progressbar/dist/styles.css'
 import TwitterAvatar from './twitter-avatar'
 import TwitterButton from './twitter-button'
 import { showToast } from '@/lib/toast-helpers'
-import { validateTweetContent } from '@/lib/validation'
+import { validateTweetContent, validateDisplayName } from '@/lib/validation'
 
 interface TwitterPostFormProps {
   placeholder: string
@@ -138,6 +138,13 @@ export default function TwitterPostForm({
 
     if (!displayName || !username) {
       showToast.error('Please enter a name and @username before tweeting.')
+      return
+    }
+
+    // Validate display name
+    const displayNameValidation = validateDisplayName(displayName)
+    if (!displayNameValidation.valid) {
+      showToast.error(displayNameValidation.error || 'Invalid display name')
       return
     }
 
@@ -282,7 +289,7 @@ export default function TwitterPostForm({
           onKeyDown={handleKeyDown}
           maxLength={maxLength * 1.2} // Allow typing over for UX
           disabled={loading}
-          rows={2}
+          rows={3}
         />
         <hr
           className="opacity-0 peer-focus:opacity-100 h-[1px] transition-opacity border-white/10 w-full"

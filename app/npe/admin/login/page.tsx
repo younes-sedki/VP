@@ -12,6 +12,8 @@ import {
   ArrowLeft,
   ImagePlus,
   Send,
+  FileText,
+  FileImage,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,7 +40,9 @@ type UserTweet = {
   created_at: string
 }
 
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024 // 2MB client-side guard
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // 5MB for images
+const MAX_PDF_BYTES = 10 * 1024 * 1024 // 10MB for PDFs
+const MAX_GIF_BYTES = 10 * 1024 * 1024 // 10MB for GIFs
 
 function wrapSelection(
   value: string,
@@ -90,6 +94,7 @@ export default function AdminLoginPage() {
 
   const [content, setContent] = useState('')
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null)
+  const [fileData, setFileData] = useState<{ url: string; type: 'image' | 'pdf' | 'gif'; name: string } | null>(null)
   const [posting, setPosting] = useState(false)
   const [postError, setPostError] = useState<string | null>(null)
   const [tweets, setTweets] = useState<AdminTweet[]>([])
@@ -209,24 +214,51 @@ export default function AdminLoginPage() {
     })
   }
 
-  const onPickImage = async (file: File | null) => {
+  const onPickFile = async (file: File | null) => {
     setPostError(null)
     if (!file) {
       setImageDataUrl(null)
-      return
-    }
-    if (!file.type.startsWith('image/')) {
-      setPostError('Please choose a valid image file.')
-      return
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      setPostError('Image is too large. Please keep it under 2MB.')
+      setFileData(null)
       return
     }
 
+    // Validate file type
+    const isImage = file.type.startsWith('image/') && file.type !== 'image/gif'
+    const isGif = file.type === 'image/gif'
+    const isPdf = file.type === 'application/pdf'
+
+    if (!isImage && !isGif && !isPdf) {
+      setPostError('Please choose a valid image (JPG/PNG/WEBP), GIF, or PDF file.')
+      return
+    }
+
+    // Validate file size
+    let maxSize = MAX_IMAGE_BYTES
+    if (isPdf) maxSize = MAX_PDF_BYTES
+    if (isGif) maxSize = MAX_GIF_BYTES
+
+    if (file.size > maxSize) {
+      const maxMB = (maxSize / (1024 * 1024)).toFixed(0)
+      setPostError(`File is too large. Please keep it under ${maxMB}MB.`)
+      return
+    }
+
+    // Read file as data URL
     const reader = new FileReader()
-    reader.onload = () => setImageDataUrl(String(reader.result || ''))
-    reader.onerror = () => setPostError('Failed to read image')
+    reader.onload = () => {
+      const dataUrl = String(reader.result || '')
+      if (isImage) {
+        setImageDataUrl(dataUrl)
+        setFileData({ url: dataUrl, type: 'image', name: file.name })
+      } else if (isGif) {
+        setImageDataUrl(dataUrl) // GIFs can be displayed as images
+        setFileData({ url: dataUrl, type: 'gif', name: file.name })
+      } else if (isPdf) {
+        setImageDataUrl(null) // PDFs don't have image preview
+        setFileData({ url: dataUrl, type: 'pdf', name: file.name })
+      }
+    }
+    reader.onerror = () => setPostError('Failed to read file')
     reader.readAsDataURL(file)
   }
 
@@ -240,19 +272,29 @@ export default function AdminLoginPage() {
     setPosting(true)
     setPostError(null)
     try {
+      // Get CSRF token
+      const csrfRes = await fetch('/api/csrf-token')
+      const { token } = await csrfRes.json()
+      
       const res = await fetch('/api/tweets', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': token,
+        },
         body: JSON.stringify({
           isAdmin: true,
           content: trimmed,
-          imageUrl: imageDataUrl,
+          imageUrl: imageDataUrl || fileData?.url || null,
+          fileType: fileData?.type || null,
+          fileName: fileData?.name || null,
         }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data?.error || 'Failed to post')
       setContent('')
       setImageDataUrl(null)
+      setFileData(null)
       await fetchAdminTweets()
     } catch (err) {
       setPostError(err instanceof Error ? err.message : 'Failed to post')
@@ -527,29 +569,39 @@ export default function AdminLoginPage() {
           />
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <label className="inline-flex items-center gap-2 text-xs text-white/70 cursor-pointer group">
                 <span className="h-8 w-8 rounded-full border border-emerald-500/40 flex items-center justify-center bg-emerald-500/5 group-hover:bg-emerald-500/15 transition-colors">
                   <ImagePlus className="w-4 h-4 text-emerald-300" />
                 </span>
-                <span>Attach image (max 2MB)</span>
+                <span>Image/GIF/PDF</span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,application/pdf"
                   className="hidden"
-                  onChange={(e) => onPickImage(e.target.files?.[0] || null)}
+                  onChange={(e) => onPickFile(e.target.files?.[0] || null)}
                 />
               </label>
-              {imageDataUrl && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 px-3 text-xs bg-emerald-500/10 text-emerald-100 border border-emerald-500/40 hover:bg-emerald-500/25"
-                  onClick={() => setImageDataUrl(null)}
-                >
-                  Remove image
-                </Button>
+              {(imageDataUrl || fileData) && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-emerald-400">
+                    {fileData?.type === 'pdf' && <FileText className="w-3 h-3 inline mr-1" />}
+                    {fileData?.type === 'gif' && <FileImage className="w-3 h-3 inline mr-1" />}
+                    {fileData?.name || 'File attached'}
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 px-3 text-xs bg-emerald-500/10 text-emerald-100 border border-emerald-500/40 hover:bg-emerald-500/25"
+                    onClick={() => {
+                      setImageDataUrl(null)
+                      setFileData(null)
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
               )}
             </div>
 
@@ -566,14 +618,23 @@ export default function AdminLoginPage() {
 
           {postError && <p className="text-red-400 text-xs mt-3">{postError}</p>}
 
-          {(content.trim() || imageDataUrl) && (
+          {(content.trim() || imageDataUrl || fileData) && (
             <div className="mt-4 pt-4 border-t border-white/10">
               <div className="text-xs text-white/50 mb-2">Preview</div>
               <div className="bg-neutral-950 border border-white/10 rounded-xl p-3">
                 <RichTextContent content={content || ' '} />
-                {imageDataUrl && (
+                {imageDataUrl && fileData?.type !== 'pdf' && (
                   <div className="mt-3 rounded-lg overflow-hidden border border-white/10">
                     <img src={imageDataUrl} alt="Preview" className="w-full h-auto" />
+                  </div>
+                )}
+                {fileData?.type === 'pdf' && (
+                  <div className="mt-3 rounded-lg border border-white/10 p-4 bg-neutral-900/50">
+                    <div className="flex items-center gap-2 text-emerald-400">
+                      <FileText className="w-5 h-5" />
+                      <span className="text-sm font-medium">{fileData.name}</span>
+                      <span className="text-xs text-white/50">(PDF)</span>
+                    </div>
                   </div>
                 )}
               </div>

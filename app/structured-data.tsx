@@ -5,7 +5,7 @@ export default function StructuredData() {
     "@type": "Person",
     name: "Younes SEDKI",
     jobTitle: "Full-Stack Developer",
-    description: "Full-Stack Developer specializing in React, Next.js, Node.js, and DevOps",
+    description: "Full-Stack Developer specializing in React, Next.js, Node.js",
     url: "https://sedkiy.dev", // Update with your actual domain
     email: "younes_sedki@hotmail.fr",
     alumniOf: {

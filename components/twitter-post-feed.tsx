@@ -11,7 +11,7 @@ import {
   RiEditLine,
   RiShareLine,
 } from 'react-icons/ri'
-import { BadgeCheck } from 'lucide-react'
+import { BadgeCheck, FileText, FileImage, Download } from 'lucide-react'
 
 import TwitterAvatar from './twitter-avatar'
 import { useTweets } from '@/hooks/use-tweets'
@@ -35,6 +35,8 @@ interface TwitterPostFeedProps {
     content: string
     image?: string | null
     images?: string[] | null
+    fileType?: 'image' | 'pdf' | 'gif' | null
+    fileName?: string | null
     created_at: string
     likes: number
     edited?: boolean
@@ -416,48 +418,103 @@ export default function TwitterPostFeed({
                 </div>
               </div>
             )}
-            {images.length > 0 && (
-              <div 
-                className={`mt-2 rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:opacity-90 transition-opacity ${
-                  images.length === 1 
-                    ? 'max-w-xs' 
-                    : images.length === 2 
-                    ? 'max-w-md grid grid-cols-2 gap-1' 
-                    : 'max-w-md grid grid-cols-2 gap-1'
-                }`}
-              >
-                {images.slice(0, 4).map((img: string, idx: number) => (
-                  <div
-                    key={idx}
-                    className={`relative ${
-                      images.length === 3 && idx === 0 ? 'col-span-2' : ''
-                    } ${images.length > 4 && idx === 3 ? 'relative' : ''}`}
+            {/* File attachments (PDF, GIF, Images) */}
+            {(images.length > 0 || data.fileType) && (
+              <div className="mt-2">
+                {/* PDF File */}
+                {data.fileType === 'pdf' && data.image && (
+                  <div 
+                    className="rounded-lg border border-white/10 bg-neutral-900/50 p-4 hover:bg-neutral-900/70 transition-colors cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation()
-                      setSelectedImageIndex(idx)
+                      window.open(data.image || '', '_blank')
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-lg bg-red-500/20 flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-red-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-medium truncate">
+                          {data.fileName || 'Document.pdf'}
+                        </p>
+                        <p className="text-white/60 text-xs">PDF Document</p>
+                      </div>
+                      <Download className="w-5 h-5 text-white/40" />
+                    </div>
+                  </div>
+                )}
+                
+                {/* GIF File */}
+                {data.fileType === 'gif' && data.image && (
+                  <div 
+                    className="rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:opacity-90 transition-opacity max-w-xs"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedImageIndex(0)
                       setImageModalOpen(true)
                     }}
                   >
-                    <img
-                      src={img}
-                      alt={`Tweet image ${idx + 1}`}
-                      className={`w-full h-auto object-cover ${
-                        images.length === 1 
-                          ? 'max-h-48' 
-                          : images.length === 2 
-                          ? 'max-h-48' 
-                          : 'max-h-32'
-                      }`}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    {images.length > 4 && idx === 3 && (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                        <span className="text-white text-sm font-semibold">+{images.length - 4}</span>
+                    <div className="relative">
+                      <img
+                        src={data.image}
+                        alt={data.fileName || 'GIF'}
+                        className="w-full h-auto max-h-48 object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <div className="absolute top-2 right-2 bg-black/60 rounded px-2 py-1">
+                        <span className="text-white text-xs font-semibold">GIF</span>
                       </div>
-                    )}
+                    </div>
                   </div>
-                ))}
+                )}
+                
+                {/* Regular Images */}
+                {images.length > 0 && data.fileType !== 'pdf' && data.fileType !== 'gif' && (
+                  <div 
+                    className={`rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:opacity-90 transition-opacity ${
+                      images.length === 1 
+                        ? 'max-w-xs' 
+                        : images.length === 2 
+                        ? 'max-w-md grid grid-cols-2 gap-1' 
+                        : 'max-w-md grid grid-cols-2 gap-1'
+                    }`}
+                  >
+                    {images.slice(0, 4).map((img: string, idx: number) => (
+                      <div
+                        key={idx}
+                        className={`relative ${
+                          images.length === 3 && idx === 0 ? 'col-span-2' : ''
+                        } ${images.length > 4 && idx === 3 ? 'relative' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedImageIndex(idx)
+                          setImageModalOpen(true)
+                        }}
+                      >
+                        <img
+                          src={img}
+                          alt={`Tweet image ${idx + 1}`}
+                          className={`w-full h-auto object-cover ${
+                            images.length === 1 
+                              ? 'max-h-48' 
+                              : images.length === 2 
+                              ? 'max-h-48' 
+                              : 'max-h-32'
+                          }`}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        {images.length > 4 && idx === 3 && (
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                            <span className="text-white text-sm font-semibold">+{images.length - 4}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             <div className="flex gap-3 mt-1">

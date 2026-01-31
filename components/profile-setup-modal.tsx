@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useTweets } from '@/hooks/use-tweets'
+import { validateDisplayName } from '@/lib/validation'
 
 const STORAGE_KEY = 'tweetUserInfo'
 
@@ -111,13 +112,10 @@ export function ProfileSetupModal() {
       return
     }
 
-    if (displayName.trim().length < 2) {
-      setError('Display name must be at least 2 characters')
-      return
-    }
-
-    if (displayName.trim().length > 50) {
-      setError('Display name must be 50 characters or less')
+    // Validate display name using validation library
+    const validation = validateDisplayName(displayName.trim())
+    if (!validation.valid) {
+      setError(validation.error || 'Invalid display name')
       return
     }
 

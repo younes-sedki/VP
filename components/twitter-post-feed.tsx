@@ -11,7 +11,7 @@ import {
   RiEditLine,
   RiShareLine,
 } from 'react-icons/ri'
-import { BadgeCheck, FileText, FileImage, Download, Star } from 'lucide-react'
+import { BadgeCheck, FileText, FileImage, Download, Crown } from 'lucide-react'
 
 import TwitterAvatar from './twitter-avatar'
 import { useTweets } from '@/hooks/use-tweets'
@@ -64,7 +64,6 @@ export default function TwitterPostFeed({
   const [editPost, setEditPost] = useState(false)
   const [hasLiked, setHasLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(data.likes || 0)
-  const [likedByAdmin, setLikedByAdmin] = useState(data.likedByAdmin || false)
   const [imageModalOpen, setImageModalOpen] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
@@ -89,13 +88,12 @@ export default function TwitterPostFeed({
     
     // Use server likes as the source of truth
     setLikeCount(data.likes || 0)
-    setLikedByAdmin(data.likedByAdmin || false)
     
     // Check localStorage for user's like state (for UI feedback)
     const likedTweets = getLikedTweets()
     const isLiked = likedTweets.has(data.id)
     setHasLiked(isLiked)
-  }, [data.id, data.likes, data.likedByAdmin])
+  }, [data.id, data.likes])
 
 
   // Handle ESC key to close image modal and arrow keys for navigation
@@ -179,10 +177,6 @@ export default function TwitterPostFeed({
         if (result.success && typeof result.likes === 'number') {
           // Update with server response
           setLikeCount(result.likes)
-          // Update likedByAdmin if provided (for user tweets)
-          if (data.avatar === 'user' && 'likedByAdmin' in result) {
-            setLikedByAdmin(Boolean(result.likedByAdmin))
-          }
         }
       } catch (error) {
         // Revert optimistic update on error
@@ -605,19 +599,19 @@ export default function TwitterPostFeed({
                     {hasLiked ? 'Unlike this tweet' : 'Like this tweet'}
                   </TooltipContent>
                 </Tooltip>
-                {/* Admin like indicator when admin liked a user tweet */}
-                {data.avatar === 'user' && likedByAdmin && (
+                {/* Admin badge when admin liked a user tweet - different icon */}
+                {data.avatar === 'user' && data.likedByAdmin && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="flex items-center cursor-help">
-                        <Star 
-                          className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400/30" 
-                          strokeWidth={2.5}
+                      <div className="relative cursor-help flex items-center justify-center">
+                        <Crown 
+                          className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400/20" 
+                          aria-label="Liked by admin"
                         />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10 text-xs">
-                      Liked by {ADMIN_CONFIG.name}
+                      Liked by Younes SEDKI
                     </TooltipContent>
                   </Tooltip>
                 )}

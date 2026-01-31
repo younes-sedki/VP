@@ -829,7 +829,8 @@ export default function AdminLoginPage() {
                             : 'text-white/60 hover:text-red-400 hover:bg-red-500/10'
                         }`}
                         disabled={likingTweetId === t.id}
-                        onClick={async () => {
+                        onClick={async (e) => {
+                          e.stopPropagation()
                           setLikingTweetId(t.id)
                           try {
                             const action = (t as any).likedByAdmin ? 'unlike' : 'like'
@@ -838,10 +839,16 @@ export default function AdminLoginPage() {
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ action }),
                             })
-                            if (!response.ok) throw new Error('Failed to like')
+                            if (!response.ok) {
+                              const errorData = await response.json().catch(() => ({}))
+                              throw new Error(errorData.error || 'Failed to like')
+                            }
+                            const result = await response.json()
+                            // Refresh tweets to get updated likedByAdmin status
                             await fetchAdminTweets()
                           } catch (err) {
                             console.error('Error liking tweet:', err)
+                            alert(err instanceof Error ? err.message : 'Failed to like tweet')
                           } finally {
                             setLikingTweetId(null)
                           }

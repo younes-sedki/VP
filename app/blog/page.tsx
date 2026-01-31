@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import AnimatedHeading from "@/components/animated-heading"
 import { BlogTweetSection } from "@/components/blog-tweet-section"
+import BlogSuggestions from "@/components/blog-suggestions"
 
 export default function BlogPage() {
   const [mounted, setMounted] = useState(false)
@@ -46,6 +47,8 @@ export default function BlogPage() {
         </header>
 
         <BlogTweetSection />
+        
+        <BlogSuggestions />
       </div>
     </main>
   )

@@ -92,10 +92,11 @@ export async function POST(
     // Track admin likes for user tweets
     let likedByAdmin = false
     if (!isAdminTweet && isAdmin) {
+      // Admin is liking/unliking - set based on action
       likedByAdmin = action === 'like'
-    } else if (!isAdminTweet && tweet.likedByAdmin) {
-      // Preserve existing admin like status if not admin
-      likedByAdmin = tweet.likedByAdmin
+    } else if (!isAdminTweet) {
+      // Not admin and not admin tweet - preserve existing status
+      likedByAdmin = tweet.likedByAdmin || false
     }
     
     // Use direct Supabase update for better performance and reliability

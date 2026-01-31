@@ -18,6 +18,7 @@ type TweetFromApi = {
   fileName?: string | null
   created_at: string
   likes: number
+  likedByAdmin?: boolean
   edited?: boolean
   updatedAt?: string
 }
@@ -49,12 +50,12 @@ async function getTweet(id: string): Promise<TweetFromApi | null> {
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const tweet = await getTweet(params.id)
-  
+          
   if (!tweet) {
     return {
       title: 'Tweet not found',
       description: 'This tweet is not available.',
-    }
+        }
   }
 
   // Get base URL from environment or use default
@@ -64,10 +65,15 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   const tweetUrl = `${baseUrl}/tweet/${tweet.id}`
   
   // Prepare title and description
-  const title = tweet.author ? `${tweet.author} on ${tweet.handle || 'Blog'}` : 'Tweet'
+  const authorName = tweet.author || 'User'
+  const title = `${authorName} on sedkiy.dev`
   const description = tweet.content 
     ? (tweet.content.length > 160 ? tweet.content.substring(0, 157) + '...' : tweet.content)
-    : `A post by ${tweet.author || 'user'}`
+    : `A post by ${authorName} on sedkiy.dev`
+  
+  // Add admin badge indicator to description if admin liked
+  const adminLikedText = tweet.likedByAdmin ? ' · Liked by Younes SEDKI' : ''
+  const finalDescription = description + adminLikedText
   
   // Prepare image
   let imageUrl = `${baseUrl}/og-image.png` // Default OG image
@@ -85,12 +91,16 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
   return {
     title,
-    description,
+    description: finalDescription,
     openGraph: {
       title,
-      description,
+      description: finalDescription,
       url: tweetUrl,
-      siteName: 'Younes SEDKI Portfolio',
+      siteName: 'sedkiy.dev',
+      locale: 'en_US',
+      type: 'article',
+      authors: [authorName],
+      publishedTime: tweet.created_at,
       images: [
         {
           url: imageUrl,
@@ -99,13 +109,13 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
           alt: title,
         },
       ],
-      type: 'article',
     },
     twitter: {
       card: 'summary_large_image',
       title,
-      description,
+      description: finalDescription,
       images: [imageUrl],
+      creator: tweet.avatar === 'admin' ? '@younes-sedki' : undefined,
     },
     alternates: {
       canonical: tweetUrl,

@@ -109,18 +109,57 @@ export async function POST(
       const tableName = isAdminTweet ? 'admin_tweets' : 'user_tweets'
       
       const updateData: any = { likes: newLikes }
+      
+      // Only add likedByAdmin if it's a user tweet and column exists
+      // Gracefully handle if column doesn't exist yet (migration not run)
       if (!isAdminTweet) {
-        updateData.likedByAdmin = likedByAdmin
-      }
-      
-      const { error } = await supabase
-        .from(tableName)
-        .update(updateData)
-        .eq('id', tweetId)
-      
-      if (error) {
-        console.error('Supabase update error:', error)
-        throw new Error(`Failed to update likes: ${error.message}`)
+        try {
+          // Try to update with likedByAdmin
+          const updateWithAdminLike = { ...updateData, likedByAdmin }
+          const { error: updateError } = await supabase
+            .from(tableName)
+            .update(updateWithAdminLike)
+            .eq('id', tweetId)
+          
+          if (updateError) {
+            // If column doesn't exist, fall back to just updating likes
+            if (updateError.message?.includes('likedByAdmin') || updateError.message?.includes('schema cache')) {
+              console.warn('likedByAdmin column not found, updating likes only. Please run migration: supabase-migration-admin-likes.sql')
+              const { error: likesOnlyError } = await supabase
+                .from(tableName)
+                .update(updateData)
+                .eq('id', tweetId)
+              
+              if (likesOnlyError) {
+                throw new Error(`Failed to update likes: ${likesOnlyError.message}`)
+              }
+            } else {
+              throw new Error(`Failed to update likes: ${updateError.message}`)
+            }
+          }
+        } catch (err) {
+          // Fallback: try updating just likes if likedByAdmin fails
+          const { error: likesOnlyError } = await supabase
+            .from(tableName)
+            .update(updateData)
+            .eq('id', tweetId)
+          
+          if (likesOnlyError) {
+            console.error('Supabase update error:', likesOnlyError)
+            throw new Error(`Failed to update likes: ${likesOnlyError.message}`)
+          }
+        }
+      } else {
+        // Admin tweet - just update likes
+        const { error } = await supabase
+          .from(tableName)
+          .update(updateData)
+          .eq('id', tweetId)
+        
+        if (error) {
+          console.error('Supabase update error:', error)
+          throw new Error(`Failed to update likes: ${error.message}`)
+        }
       }
     } else {
       // Fallback to storage methods (for local development)

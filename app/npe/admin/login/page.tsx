@@ -128,18 +128,56 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     let mounted = true
-    ;(async () => {
+    let timeoutId: NodeJS.Timeout | null = null
+    
+    const checkAuth = async () => {
       try {
-        const res = await fetch('/api/admin/me', { cache: 'no-store' })
+        const res = await fetch('/api/admin/me', { 
+          cache: 'no-store',
+          credentials: 'include' // Ensure cookies are sent
+        })
         const data = await res.json().catch(() => ({}))
         if (!mounted) return
-        setLoggedIn(Boolean(data?.loggedIn))
+        
+        const isLoggedIn = Boolean(data?.loggedIn)
+        setLoggedIn(isLoggedIn)
+        
+        // If logged in, verify session is still valid periodically
+        if (isLoggedIn) {
+          // Re-check auth every 5 minutes to catch expired sessions
+          timeoutId = setInterval(async () => {
+            if (!mounted) return
+            try {
+              const recheckRes = await fetch('/api/admin/me', { 
+                cache: 'no-store',
+                credentials: 'include'
+              })
+              const recheckData = await recheckRes.json().catch(() => ({}))
+              if (!mounted) return
+              const stillLoggedIn = Boolean(recheckData?.loggedIn)
+              if (!stillLoggedIn && mounted) {
+                setLoggedIn(false)
+              }
+            } catch (err) {
+              console.error('Auth recheck failed:', err)
+            }
+          }, 5 * 60 * 1000) // 5 minutes
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err)
+        if (mounted) {
+          setLoggedIn(false)
+        }
       } finally {
         if (mounted) setChecking(false)
       }
-    })()
+    }
+    
+    checkAuth()
+    
     return () => {
       mounted = false
+      if (timeoutId) clearInterval(timeoutId)
     }
   }, [])
 
@@ -369,14 +407,19 @@ export default function AdminLoginPage() {
     }
   }
 
+  // Show loading state while checking authentication
   if (checking) {
     return (
       <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
-        <div className="text-white/60 text-sm">Loading…</div>
+        <div className="text-center space-y-3">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+          <div className="text-white/60 text-sm">Checking authentication…</div>
+        </div>
       </div>
     )
   }
 
+  // Show login form if not logged in
   if (!loggedIn) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-black flex items-center justify-center p-4">

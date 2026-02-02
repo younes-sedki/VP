@@ -68,8 +68,18 @@ export const TweetCompose = forwardRef<HTMLTextAreaElement, TweetComposeProps>(f
   }
 
   return (
-    <div className="border-b border-white/10 bg-gradient-to-b from-emerald-500/5 via-transparent to-transparent">
-      <div className="px-4 py-4 hover:bg-white/[2%] transition-all duration-300 backdrop-blur-sm">
+    <div className={cn(
+      "border-b border-black/10 dark:border-white/10",
+      "bg-white/5 dark:bg-black/90",
+      "bg-linear-to-br from-black/5 to-black/[0.02] dark:from-white/5 dark:to-white/[0.02]",
+      "backdrop-blur-xl backdrop-saturate-[180%]",
+      "shadow-xs dark:shadow-[0_8px_16px_rgb(0_0_0_/_0.15)]"
+    )}>
+      <div className={cn(
+        "px-4 py-4",
+        "hover:bg-white/[8%] dark:hover:bg-white/[5%]",
+        "transition-all duration-300 backdrop-blur-sm"
+      )}>
         <form onSubmit={handleSubmit}>
           {/* User info */}
           <div className="flex gap-4">
@@ -104,9 +114,16 @@ export const TweetCompose = forwardRef<HTMLTextAreaElement, TweetComposeProps>(f
                   placeholder={placeholder}
                   disabled={disabled || isComposing}
                   className={cn(
-                    'w-full text-xl placeholder-white/40 text-white',
-                    'bg-transparent outline-none resize-none',
+                    'w-full text-xl placeholder-white/40 text-white/95',
+                    'bg-linear-to-br from-black/[0.05] to-transparent dark:from-white/[0.08] dark:to-transparent',
+                    'backdrop-blur-md backdrop-saturate-150',
+                    'border border-black/[0.05] dark:border-white/[0.08]',
+                    'rounded-xl px-4 py-3',
+                    'outline-none resize-none',
                     'min-h-[100px] leading-relaxed',
+                    'shadow-xs',
+                    'focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20',
+                    'transition-all duration-300 ease-out',
                     'disabled:opacity-50 disabled:cursor-not-allowed'
                   )}
                   maxLength={maxLength * 1.2} // Allow typing over for UX

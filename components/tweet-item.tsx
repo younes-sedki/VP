@@ -307,8 +307,15 @@ export function TweetItem({
       />
       
       <article 
-        className="border-b border-white/10 transition-all duration-300 ease-out
-                   hover:bg-white/[3%] hover:border-white/20 group"
+        className={cn(
+          "border-b border-black/10 dark:border-white/10 transition-all duration-300 ease-out",
+          "bg-white/5 dark:bg-black/90",
+          "bg-linear-to-br from-black/5 to-black/[0.02] dark:from-white/5 dark:to-white/[0.02]",
+          "hover:bg-white/[8%] dark:hover:bg-white/[5%] hover:border-black/20 dark:hover:border-white/20",
+          "backdrop-blur-xl backdrop-saturate-[180%]",
+          "shadow-xs dark:shadow-[0_8px_16px_rgb(0_0_0_/_0.15)]",
+          "will-change-transform translate-z-0 group"
+        )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -404,9 +411,15 @@ export function TweetItem({
                 <textarea
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
-                  className="w-full bg-white/5 border border-emerald-500/30 rounded-lg px-3 py-2 
-                            text-[15px] sm:text-base text-white/95 resize-none
-                            focus:outline-none focus:border-emerald-500"
+                  className={cn(
+                    "w-full bg-linear-to-br from-black/[0.05] to-transparent dark:from-white/[0.08] dark:to-transparent",
+                    "backdrop-blur-md backdrop-saturate-150",
+                    "border border-black/[0.05] dark:border-white/[0.08]",
+                    "rounded-xl px-4 py-3 text-[15px] sm:text-base text-white/95 resize-none",
+                    "shadow-xs",
+                    "focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20",
+                    "transition-all duration-300 ease-out"
+                  )}
                   rows={3}
                   maxLength={TWEET_CONFIG.MAX_LENGTH}
                   autoFocus

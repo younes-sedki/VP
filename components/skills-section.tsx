@@ -6,7 +6,7 @@ import DotGridShader from "@/components/DotGridShader"
 const skillCategories = [
   {
     category: "Frontend",
-    skills: ["React", "Next.js", "TypeScript", "Tailwind CSS"],
+    skills: ["React", "Next.js"],
   },
   {
     category: "Backend",
@@ -14,7 +14,7 @@ const skillCategories = [
   },
   {
     category: "Tools",
-    skills: ["Git", "Linux & Terminal", "Vercel", "Databases (SQL / NoSQL)"],
+    skills: ["Git", "Linux & Terminal", "Vercel", "MongoDB"],
   },
 ]
 

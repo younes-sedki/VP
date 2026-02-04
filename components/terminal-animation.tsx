@@ -6,7 +6,7 @@ const terminalLines = [
   { type: "command", text: "$ whoami" },
   { type: "output", text: "YOUNES SEDKI - Full-Stack Developer" },
   { type: "command", text: "$ cat skills.txt" },
-  { type: "output", text: "→ TypeScript, React, Next.js" },
+  { type: "output", text: "→ React, Next.js" },
   { type: "output", text: "→ Node.js, Python" },
   { type: "output", text: "→ Linux, MongoDB" },
   { type: "command", text: "$ ./deploy.sh --production" },

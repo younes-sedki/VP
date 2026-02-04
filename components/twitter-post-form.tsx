@@ -321,7 +321,7 @@ export default function TwitterPostForm({
           </div>
           <TwitterButton
             disabled={loading || !body.trim() || body.length > maxLength}
-            label={loading ? 'Posting...' : 'Tweet'}
+            label={loading ? 'Posting...' : 'Post'}
             onClick={handleSubmit}
             labelSize="sm"
             labelWeight="semibold"

@@ -123,14 +123,3 @@
     @apply bg-background text-foreground;
   }
 }
-/* Hide scrollbar on mobile only */
-@media (max-width: 768px) {
-  ::-webkit-scrollbar {
-    display: none;
-  }
-
-  * {
-    scrollbar-width: none;     /* Firefox */
-    -ms-overflow-style: none;  /* IE / old Edge */
-  }
-}

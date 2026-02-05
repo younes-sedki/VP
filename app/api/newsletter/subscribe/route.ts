@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Create Supabase client with service role key for server-side operations
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  console.error('Missing required Supabase environment variables')
+}
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -11,7 +14,9 @@ export async function POST(request: Request) {
   try {
     const { email } = await request.json()
 
-    if (!email || !email.includes('@')) {
+    // Enhanced email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!email || !emailRegex.test(email)) {
       return NextResponse.json(
         { error: 'Please enter a valid email address' },
         { status: 400 }
@@ -21,7 +26,7 @@ export async function POST(request: Request) {
     const normalizedEmail = email.toLowerCase().trim()
 
     // Insert email into Supabase
-    const { error: supabaseError } = await supabase
+    const { data: insertData, error: supabaseError } = await supabase
       .from('newsletter_subscribers')
       .insert([
         {
@@ -29,97 +34,162 @@ export async function POST(request: Request) {
           is_active: true,
         },
       ])
+      .select()
 
     if (supabaseError) {
-      if (supabaseError.code === '23505') {
+      console.error('Supabase insert error:', supabaseError)
+      
+      // Postgres unique violation
+      if (supabaseError.code === '23505' || supabaseError.message?.includes('duplicate')) {
         return NextResponse.json(
           { error: 'This email is already subscribed' },
           { status: 409 }
         )
       }
-      console.error('Supabase error:', supabaseError)
+      
       return NextResponse.json(
         { error: 'Failed to subscribe. Please try again.' },
         { status: 500 }
       )
     }
 
-    // Send welcome email using Supabase function
-    try {
-      const emailFrom = process.env.EMAIL_FROM || 'newsletter@yourdomain.com'
-      const emailFromName = process.env.EMAIL_FROM_NAME || 'YOUNES SEDKI'
-      const websiteUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    if (!insertData || insertData.length === 0) {
+      console.error('Insert returned no rows')
+      return NextResponse.json(
+        { error: 'Subscription failed — no data returned' },
+        { status: 500 }
+      )
+    }
 
+    // Send welcome email
+    try {
+      const emailFrom = process.env.EMAIL_FROM || 'no-reply@sedkiy.dev'
+      const emailFromName = process.env.EMAIL_FROM_NAME || 'Sedkiy'
+      const websiteUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://sedkiy.dev'
+
+      // Plain text version - CRITICAL for Outlook
+      const textBody = `Welcome to My Portfolio!
+
+Hi there,
+
+Thanks for subscribing! I'm thrilled to have you part of my developer community.
+
+What You'll Receive:
+✓ Weekly project progress reports and milestones
+✓ Behind-the-scenes development insights
+✓ New tools and techniques I'm exploring
+✓ Early previews of work-in-progress projects
+✓ Industry observations and reflections
+✓ Wins, lessons, and growth stories
+
+Connect With Me:
+GitHub: https://github.com/younes-sedki
+LinkedIn: https://linkedin.com/in/younes-sedki
+
+Looking forward to sharing my journey with you!
+
+Best regards,
+${emailFromName}
+
+---
+You're receiving this because you subscribed at ${websiteUrl}
+Unsubscribe: ${websiteUrl}/unsubscribe?email=${encodeURIComponent(normalizedEmail)}`
+
+      // HTML version - dark theme matching website
       const htmlBody = `<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to My Newsletter</title>
-  </head>
-  <body style="margin: 0; padding: 0; font-family:  -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0a0a0a;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0a0a0a;">
-      <tr>
-        <td align="center" style="padding: 40px 20px;">
-          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #171717; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); overflow: hidden;">
-            <tr>
-              <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #171717 0%, #262626 100%);">
-                <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Welcome! 🎉</h1>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 30px 40px;">
-                <p style="margin: 0 0 20px; color: rgba(255, 255, 255, 0.9); font-size: 16px; line-height: 1.6;">Hi there!</p>
-                <p style="margin: 0 0 20px; color: rgba(255, 255, 255, 0.9); font-size: 16px; line-height: 1.6;">Thank you for subscribing to my newsletter. I'm excited to have you here!</p>
-                <p style="margin: 0 0 20px; color: rgba(255, 255, 255, 0.7); font-size: 15px; line-height: 1.6;">Here's what you can expect in your inbox:</p>
-                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
-                  <tr>
-                    <td style="padding: 12px 0;">
-                      <span style="color: #10b981; font-size: 16px; margin-right: 10px;">✓</span>
-                      <span style="color: rgba(255, 255, 255, 0.8); font-size: 14px;">Weekly project updates and progress reports</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 12px 0;">
-                      <span style="color: #10b981; font-size: 16px; margin-right: 10px;">✓</span>
-                      <span style="color: rgba(255, 255, 255, 0.8); font-size: 14px;">Behind-the-scenes insights into my work</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 12px 0;">
-                      <span style="color: #10b981; font-size: 16px; margin-right: 10px;">✓</span>
-                      <span style="color: rgba(255, 255, 255, 0.8); font-size: 14px;">New tools, techniques, and industry insights</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 12px 0;">
-                      <span style="color: #10b981; font-size: 16px; margin-right: 10px;">✓</span>
-                      <span style="color: rgba(255, 255, 255, 0.8); font-size: 14px;">Exclusive previews of work-in-progress projects</span>
-                    </td>
-                  </tr>
-                </table>
-                <p style="margin: 25px 0 0; color: rgba(255, 255, 255, 0.9); font-size: 16px; line-height: 1.6;">I promise to keep things valuable and respect your inbox. No spam, ever.</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 20px 40px 40px;" align="center">
-                <a href="${websiteUrl}" style="display: inline-block; padding: 14px 32px; background-color: #ffffff; color: #0a0a0a; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">Visit My Website</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 30px 40px; border-top: 1px solid rgba(255, 255, 255, 0.1); background-color: #0a0a0a;">
-                <p style="margin: 0 0 10px; color: rgba(255, 255, 255, 0.5); font-size: 13px; text-align: center;">You're receiving this email because you subscribed to my newsletter.</p>
-                <p style="margin: 0; color: rgba(255, 255, 255, 0.4); font-size: 12px; text-align: center;">Want to unsubscribe? <a href="${websiteUrl}/unsubscribe?email=${encodeURIComponent(normalizedEmail)}" style="color: rgba(255, 255, 255, 0.6); text-decoration: underline;">Click here</a></p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to My Newsletter</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td {font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;}
+  </style>
+  <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; background-color: #0a0a0a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; background-color: #0a0a0a;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" style="max-width: 600px; border-collapse: collapse; background-color: #0f0f0f; border: 1px solid rgba(255, 255, 255, 0.08);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 30px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+              <h1 style="color: #f5f5f5; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Welcome to My Portfolio! 🚀</h1>
+              <p style="color: #b0b0b0; margin: 12px 0 0 0; font-size: 14px;">Thanks for joining my community</p>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <p style="color: #e0e0e0; line-height: 1.65; margin: 0 0 24px 0; font-size: 15px;">Hi there,</p>
+              
+              <p style="color: #d0d0d0; line-height: 1.65; margin: 0 0 24px 0; font-size: 15px;">I'm excited to have you here! You've joined a community of developers and tech enthusiasts who follow my journey.</p>
+              
+              <h2 style="color: #f5f5f5; font-size: 16px; font-weight: 600; margin: 32px 0 16px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px;">What You'll Receive</h2>
+              
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin: 0 0 32px 0;">
+                <tr>
+                  <td style="padding: 10px 0; color: #d0d0d0; font-size: 14px; line-height: 1.5;">✓ Weekly project progress reports and milestones</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #d0d0d0; font-size: 14px; line-height: 1.5;">✓ Behind-the-scenes development insights</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #d0d0d0; font-size: 14px; line-height: 1.5;">✓ New tools and techniques I'm exploring</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #d0d0d0; font-size: 14px; line-height: 1.5;">✓ Early previews of work-in-progress projects</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #d0d0d0; font-size: 14px; line-height: 1.5;">✓ Industry observations and reflections</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; color: #d0d0d0; font-size: 14px; line-height: 1.5;">✓ Wins, lessons, and growth stories</td>
+                </tr>
+              </table>
+
+              <h2 style="color: #f5f5f5; font-size: 16px; font-weight: 600; margin: 32px 0 16px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px;">Connect With Me</h2>
+              
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin: 20px 0 32px 0;">
+                <tr>
+                  <td style="padding: 8px 0;">
+                    <a href="https://twitter.com/younes_sedki" style="color: #5b9cf5; text-decoration: none; font-size: 14px;">𝕏 Twitter</a>
+                    <span style="color: #606060; margin: 0 12px;">•</span>
+                    <a href="https://github.com/younes-sedki" style="color: #5b9cf5; text-decoration: none; font-size: 14px;">GitHub</a>
+                    <span style="color: #606060; margin: 0 12px;">•</span>
+                    <a href="https://linkedin.com/in/younes-sedki" style="color: #5b9cf5; text-decoration: none; font-size: 14px;">LinkedIn</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="color: #b0b0b0; line-height: 1.65; margin: 0; font-size: 14px;">Looking forward to sharing my journey with you!</p>
+            </td>
+          </tr>
+
+          <!-- CTA Button -->
+          <tr>
+            <td style="padding: 20px 40px; text-align: center;">
+              <a href="${websiteUrl}" style="display: inline-block; padding: 12px 32px; background-color: #f5f5f5; color: #0a0a0a; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; letter-spacing: 0.3px;">Explore My Portfolio</a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px 40px; border-top: 1px solid rgba(255, 255, 255, 0.08); color: #808080; font-size: 12px; line-height: 1.6;">
+              <p style="margin: 0 0 12px 0;">You're receiving this email because you subscribed to my newsletter.</p>
+              <p style="margin: 0;">Want to unsubscribe? <a href="${websiteUrl}/unsubscribe?email=${encodeURIComponent(normalizedEmail)}" style="color: #a0a0a0; text-decoration: underline;">Click here</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
 </html>`
 
-      // Call Supabase send_email_message function
       const { data: emailResult, error: emailError } = await supabase.rpc(
         'send_email_message',
         {
@@ -127,43 +197,52 @@ export async function POST(request: Request) {
             sender: emailFrom,
             sender_name: emailFromName,
             recipient: normalizedEmail,
-            subject: 'Welcome to My Newsletter! 🎉',
+            subject: 'Welcome to My Portfolio!',
             html_body: htmlBody,
+            text_body: textBody,
           },
         }
       )
 
       if (emailError) {
-        console.error('Supabase email function error:', emailError)
+        console.error('Email sending failed:', emailError)
+        // Don't fail the request - subscription still succeeded
         return NextResponse.json(
-          { 
-            success: false,
-            error: 'Email sending failed',
-            details: emailError.message || JSON.stringify(emailError)
+          {
+            success: true,
+            message: 'Subscribed but email sending failed',
+            emailError: emailError.message || emailError,
+            inserted: insertData,
           },
-          { status: 500 }
+          { status: 200 }
         )
       }
       
       console.log('Email sent successfully:', emailResult)
     } catch (emailError) {
       console.error('Email sending error:', emailError)
-      return NextResponse.json(
-        { 
-          success: false,
-          error: 'Email sending failed',
-          details: emailError instanceof Error ? emailError.message : String(emailError)
-        },
-        { status: 500 }
-      )
+      // Continue - subscription succeeded
     }
 
     return NextResponse.json(
-      { success: true, message: 'Successfully subscribed!' },
-      { status: 200 }
+      { 
+        success: true, 
+        message: 'Successfully subscribed!', 
+        inserted: insertData 
+      },
+      { status: 201 }
     )
+
   } catch (error) {
     console.error('Newsletter subscription error:', error)
+    
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: 'Invalid request format' },
+        { status: 400 }
+      )
+    }
+    
     return NextResponse.json(
       { error: 'An error occurred. Please try again.' },
       { status: 500 }

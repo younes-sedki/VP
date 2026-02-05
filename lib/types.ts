@@ -43,3 +43,45 @@ export interface AuthUser {
   email: string;
   name: string;
 }
+
+// ─── Newsletter Types ────────────────────────────────────────────────────────
+
+export interface NewsletterSubscriber {
+  id: number;
+  email: string;
+  is_active: boolean;
+  confirmed_at: string | null;
+  unsubscribe_token: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubscribeRequest {
+  email: string;
+}
+
+export interface SubscribeResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+}
+
+export interface UnsubscribeRequest {
+  token: string;
+  email: string;
+}
+
+export interface UnsubscribeResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+}
+
+export interface EmailMessage {
+  sender: string;
+  sender_name: string;
+  recipient: string;
+  subject: string;
+  html_body: string;
+  text_body: string;
+}

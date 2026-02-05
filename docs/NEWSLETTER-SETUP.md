@@ -1,173 +1,154 @@
-# Newsletter Supabase Setup
+# Newsletter System — Setup Guide (Resend)
 
-## Overview
-The newsletter feature stores subscriber emails in Supabase and sends automated welcome emails via MailerSend.
+## Architecture
 
-## Quick Start
+```
+User (form) → /api/newsletter/subscribe → Supabase DB (insert)
+                                        → Resend SDK  (welcome email)
+           ← JSON response
 
-### 1. Database Setup (Required)
-Run the SQL migration to create the newsletter table:
-
-1. Go to your [Supabase Dashboard](https://app.supabase.com)
-2. Navigate to **SQL Editor**
-3. Create a new query
-4. Copy the contents of `supabase-migration-newsletter.sql`
-5. Paste it into the SQL editor
-6. Click **Run**
-
-### 2. Email Setup (Optional)
-To send welcome emails, set up MailerSend:
-
-See **[EMAIL-SETUP.md](./EMAIL-SETUP.md)** for detailed instructions.
-
-**Quick setup:**
-1. Sign up at [mailersend.com](https://www.mailersend.com/)
-2. Verify your domain
-3. Get your API token
-4. Add to `.env.local`:
-   ```env
-   MAILERSEND_API_KEY=your_api_token
-   EMAIL_FROM=newsletter@yourdomain.com
-   EMAIL_FROM_NAME=YOUNES SEDKI
-   ```
-
-## Setup Steps
-
-### 1. Run the SQL Migration
-1. Go to your [Supabase Dashboard](https://app.supabase.com)
-2. Navigate to **SQL Editor**
-3. Create a new query
-4. Copy the contents of `supabase-migration-newsletter.sql`
-5. Paste it into the SQL editor
-6. Click **Run**
-
-This will create:
-- `newsletter_subscribers` table with email storage
-- Indexes for performance
-- Row Level Security (RLS) policies
-- Automatic timestamps
-
-### 2. Verify Environment Variables
-**Required** - Make sure these are set in your `.env.local`:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+Unsubscribe link → /unsubscribe?token=xxx → /api/newsletter/unsubscribe
+                                           → Supabase DB (deactivate)
+                                           → Resend SDK  (confirmation email)
 ```
 
-**Optional** - For welcome emails:
+**Stack**: Next.js API Routes + Supabase (DB only) + Resend (email) + React Email (templates)
+
+---
+
+## Step 1: Supabase Database Setup
+
+1. Open your Supabase project → **SQL Editor**
+2. Paste the entire contents of [`sql/newsletter-setup.sql`](../sql/newsletter-setup.sql)
+3. Click **Run**
+
+### What gets created:
+
+| Object | Type | Purpose |
+|--------|------|---------|
+| `newsletter_subscribers` | Table | Stores emails with unsubscribe tokens |
+| `update_updated_at()` | Trigger fn | Auto-updates `updated_at` column |
+| Indexes | B-tree | On `email`, `unsubscribe_token`, `is_active` |
+| RLS Policies | Security | Prevents public read, allows service role |
+
+> **Note**: No email functions in the database — email sending is handled entirely by the Resend SDK in your Next.js API routes.
+
+---
+
+## Step 2: Resend Configuration
+
+### 2a. Create Account
+
+1. Go to [resend.com](https://resend.com) and sign up
+2. Verify your email address
+
+### 2b. Domain Verification
+
+1. Go to **Domains** → **Add Domain**
+2. Enter `sedkiy.dev`
+3. Add the DNS records Resend provides (SPF, DKIM, DMARC)
+4. Wait for verification (usually < 5 minutes)
+
+### 2c. API Key
+
+1. Go to **API Keys** → **Create API Key**
+2. Name: `sedkiy-newsletter`
+3. Permission: **Sending access** (domain-level is fine)
+4. Copy the key (starts with `re_`)
+
+---
+
+## Step 3: Environment Variables
+
+Add to `.env.local`:
 
 ```env
-MAILERSEND_API_KEY=your_mailersend_api_token
-EMAIL_FROM=newsletter@yourdomain.com
-EMAIL_FROM_NAME=YOUNES SEDKI
-NEXT_PUBLIC_BASE_URL=https://yourdomain.com
+# Resend
+RESEND_API_KEY=re_your_api_key_here
+
+# Email sender (must match verified domain)
+EMAIL_FROM=no-reply@sedkiy.dev
+EMAIL_FROM_NAME=Younes Sedki
+EMAIL_REPLY_TO=younes@sedkiy.dev
+
+# Base URL (for unsubscribe links)
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ```
 
-Both Supabase keys are available in your Supabase project settings.
+> **Production**: Change `NEXT_PUBLIC_BASE_URL` to `https://sedkiy.dev`
 
-### 3. Test the Newsletter
-1. Start your dev server: `pnpm dev`
-2. Navigate to your website
-3. Scroll to the "Weekly Newsletter" section
-4. Test subscribing with an email address
-5. Check Supabase > Table Editor > `newsletter_subscribers` to verify the email was saved
-6. Check your inbox for the welcome email (if email is configured)
+---
 
-## Features
+## Step 4: Test
 
-✅ **Email Validation** - Checks for valid email format  
-✅ **Duplicate Prevention** - Prevents the same email from subscribing twice  
-✅ **Error Handling** - Displays user-friendly error messages  
-✅ **Welcome Emails** - Automated welcome email sent on subscription (optional)  
-✅ **Automatic Timestamps** - Records subscription and update times  
-✅ **Activation Status** - `is_active` flag for managing subscriptions  
-✅ **Indexed Queries** - Fast lookups with database indexes  
+### Quick Test (cURL)
 
-## Database Schema
+```bash
+curl -X POST http://localhost:3000/api/newsletter/subscribe \
+  -H "Content-Type: application/json" \
+  -d '{"email": "your-email@example.com"}'
+```
+
+### Expected Response
+
+```json
+{
+  "success": true,
+  "message": "You're subscribed! Check your inbox for a welcome email."
+}
+```
+
+### Verify in Supabase
 
 ```sql
-CREATE TABLE newsletter_subscribers (
-  id BIGINT PRIMARY KEY (auto-generated)
-  email VARCHAR(255) NOT NULL UNIQUE
-  subscribed_at TIMESTAMP (when subscribed)
-  updated_at TIMESTAMP (last update)
-  is_active BOOLEAN (true by default)
-  created_at TIMESTAMP (record creation)
-)
+SELECT id, email, is_active, unsubscribe_token, created_at
+FROM newsletter_subscribers
+ORDER BY created_at DESC
+LIMIT 5;
 ```
 
-## API Reference
+---
 
-### Subscribe (Client-side)
-```typescript
-const { error } = await supabase
-  .from("newsletter_subscribers")
-  .insert([{ email: "user@example.com", is_active: true }])
+## File Structure
+
+```
+emails/
+  welcome-email.tsx          # React Email welcome template
+  unsubscribe-email.tsx      # React Email unsubscribe confirmation
+lib/
+  resend.ts                  # Resend client singleton + config
+app/
+  api/newsletter/
+    subscribe/route.ts       # POST — subscribe + send welcome email
+    unsubscribe/route.ts     # POST — unsubscribe + send confirmation
+  unsubscribe/
+    page.tsx                 # Client-side unsubscribe UI
+components/
+  newsletter-section.tsx     # Subscription form component
+sql/
+  newsletter-setup.sql       # Supabase database setup (run once)
 ```
 
-### Query All Subscribers (Server-side with service role key)
-```typescript
-const { data, error } = await supabase
-  .from("newsletter_subscribers")
-  .select("*")
-  .eq("is_active", true)
-```
-
-### Unsubscribe an Email
-```typescript
-const { error } = await supabase
-  .from("newsletter_subscribers")
-  .update({ is_active: false })
-  .eq("email", "user@example.com")
-```
-
-## Next Steps
-
-### Future Enhancements
-- [ ] Email confirmation workflow
-- [ ] Unsubscribe link functionality with confirmation
-- [ ] Admin panel to view/manage subscribers
-- [ ] Email sending integration (SendGrid, Resend, etc.)
-- [ ] Analytics on subscriber growth
-- [ ] Export subscribers as CSV
-
-### To Add Email Sending:
-We recommend using:
-- **[Resend](https://resend.com)** - Modern email API
-- **[SendGrid](https://sendgrid.com)** - Reliable email service
-- **[Mailgun](https://mailgun.com)** - Flexible email platform
+---
 
 ## Troubleshooting
 
-### "Email already subscribed" error
-- This email is already in the database
-- User can unsubscribe first if they want, then resubscribe
+| Issue | Fix |
+|-------|-----|
+| `Missing RESEND_API_KEY` | Add to `.env.local` and restart dev server |
+| `403 Forbidden` from Resend | Domain not verified — check Resend dashboard |
+| `422 Validation error` | Check `EMAIL_FROM` matches a verified domain |
+| Emails go to spam | Ensure SPF/DKIM/DMARC DNS records are set |
+| Rate limited | Default: 5 requests per IP per 60 seconds |
+| Duplicate email | Returns success message (no error) — idempotent |
 
-### Emails not saving
-1. Check environment variables are set
-2. Verify SQL migration ran successfully
-3. Check browser console for errors
-4. Verify table exists: `SELECT * FROM newsletter_subscribers;` in SQL Editor
+---
 
-### Connection issues
-1. Verify `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are correct
-2. Check Supabase project is active
-3. Ensure RLS policies allow public insert
+## Security Features
 
-## Security Notes
-
-✅ Unique constraint prevents duplicate emails  
-✅ RLS policies restrict unauthorized access  
-✅ Emails are stored securely in Supabase  
-✅ No sensitive data beyond email is stored  
-✅ Client-side validation before submission  
-
-**Important**: Never expose your `SUPABASE_SERVICE_ROLE_KEY` in client-side code. Keep it server-side only.
-
-## Support
-
-For issues, check:
-- [Supabase Documentation](https://supabase.com/docs)
-- [Supabase Discord Community](https://discord.supabase.com)
-- Project error logs in Supabase dashboard
+- **Rate limiting**: 5 subscribe requests per IP per 60 seconds
+- **Email validation**: Server-side regex + length check
+- **RLS policies**: Subscribers table locked down at DB level
+- **Unsubscribe tokens**: UUID v4, one per subscriber
+- **List-Unsubscribe header**: Added to welcome emails (RFC 8058)
+- **Service role only**: All DB access uses `SUPABASE_SERVICE_ROLE_KEY` (never exposed to client)

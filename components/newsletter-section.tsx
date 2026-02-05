@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { CheckCircle2 } from "lucide-react"
+import { CheckCircle2, AlertCircle } from "lucide-react"
 import RevealOnView from "@/components/reveal-on-view"
 import DotGridShader from "@/components/DotGridShader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { supabase } from "@/lib/supabase"
 
 const newsletterTopics = [
   {
@@ -37,21 +38,42 @@ const newsletterTopics = [
 export default function NewsletterSection() {
   const [email, setEmail] = useState("")
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
 
     if (!email || !email.includes("@")) {
+      setError("Please enter a valid email address")
       return
     }
 
     setIsLoading(true)
 
     try {
-      // Replace with your actual newsletter service API
-      // For now, we'll just simulate a submission
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      // Insert email into Supabase newsletter_subscribers table
+      const { error: supabaseError } = await supabase
+        .from("newsletter_subscribers")
+        .insert([
+          {
+            email: email.toLowerCase().trim(),
+            is_active: true,
+          },
+        ])
+
+      if (supabaseError) {
+        if (supabaseError.code === "23505") {
+          // Unique constraint violation - email already subscribed
+          setError("This email is already subscribed")
+        } else {
+          setError("Failed to subscribe. Please try again.")
+          console.error("Supabase error:", supabaseError)
+        }
+        setIsLoading(false)
+        return
+      }
 
       setSubmitted(true)
       setEmail("")
@@ -61,6 +83,7 @@ export default function NewsletterSection() {
         setSubmitted(false)
       }, 5000)
     } catch (error) {
+      setError("An error occurred. Please try again.")
       console.error("Subscription error:", error)
     } finally {
       setIsLoading(false)
@@ -134,6 +157,11 @@ export default function NewsletterSection() {
                     <p className="text-sm font-medium text-white">Thank you for subscribing!</p>
                     <p className="text-xs text-white/60">Check your email to confirm.</p>
                   </div>
+                </div>
+              ) : error ? (
+                <div className="flex items-center gap-3 rounded-xl bg-red-500/10 px-4 py-3 border border-red-500/30">
+                  <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" aria-hidden="true" />
+                  <p className="text-sm text-red-300">{error}</p>
                 </div>
               ) : (
                 <form onSubmit={handleSubscribe} className="space-y-3">

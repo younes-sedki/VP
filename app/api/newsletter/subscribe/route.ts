@@ -135,12 +135,27 @@ export async function POST(request: Request) {
 
       if (emailError) {
         console.error('Supabase email function error:', emailError)
-      } else if (emailResult) {
-        console.log('Email sent successfully:', emailResult)
+        return NextResponse.json(
+          { 
+            success: false,
+            error: 'Email sending failed',
+            details: emailError.message || JSON.stringify(emailError)
+          },
+          { status: 500 }
+        )
       }
+      
+      console.log('Email sent successfully:', emailResult)
     } catch (emailError) {
-      // Log but don't fail the subscription if email fails
       console.error('Email sending error:', emailError)
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'Email sending failed',
+          details: emailError instanceof Error ? emailError.message : String(emailError)
+        },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json(

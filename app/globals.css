@@ -204,9 +204,14 @@ a[href^="mailto:"]:hover {
   }
 }
 
-/* Hide scroll bar for mobile devices */
+/* Hide scrollbars on mobile while keeping scroll enabled */
 @media (max-width: 768px) {
-    body {
-        overflow: hidden;
-    }
+  body {
+    -ms-overflow-style: none; /* IE/Edge legacy */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  body::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
 }

@@ -203,3 +203,10 @@ a[href^="mailto:"]:hover {
     animation: toast-slide-out 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
 }
+
+/* Hide scroll bar for mobile devices */
+@media (max-width: 768px) {
+    body {
+        overflow: hidden;
+    }
+}

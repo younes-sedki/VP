@@ -6,7 +6,6 @@ import RevealOnView from "@/components/reveal-on-view"
 import DotGridShader from "@/components/DotGridShader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { supabase } from "@/lib/supabase"
 
 const newsletterTopics = [
   {
@@ -53,24 +52,19 @@ export default function NewsletterSection() {
     setIsLoading(true)
 
     try {
-      // Insert email into Supabase newsletter_subscribers table
-      const { error: supabaseError } = await supabase
-        .from("newsletter_subscribers")
-        .insert([
-          {
-            email: email.toLowerCase().trim(),
-            is_active: true,
-          },
-        ])
+      // Call API route to subscribe and send welcome email
+      const response = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: email.toLowerCase().trim() }),
+      })
 
-      if (supabaseError) {
-        if (supabaseError.code === "23505") {
-          // Unique constraint violation - email already subscribed
-          setError("This email is already subscribed")
-        } else {
-          setError("Failed to subscribe. Please try again.")
-          console.error("Supabase error:", supabaseError)
-        }
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || "Failed to subscribe. Please try again.")
         setIsLoading(false)
         return
       }

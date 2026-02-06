@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useLocalTime } from '@/hooks/use-local-time'
 import { useWeather } from '@/hooks/use-weather'
-import { ArrowLeft, RefreshCw, Home, ChevronRight } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Home, ChevronRight, ChevronLeft } from 'lucide-react'
 import { SHOW_SECTIONS } from '@/lib/sections-config'
 import ProfileModal from '@/components/profile-modal'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -41,6 +41,7 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState(defaultActive)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [isReloading, setIsReloading] = useState(false)
+  const [navExpanded, setNavExpanded] = useState(false)
 
   // Refs for the sliding indicator
   const navContainerRef = useRef<HTMLDivElement>(null)
@@ -76,38 +77,7 @@ export default function Navbar() {
     coords?.longitude || null
   )
 
-  // Handle scroll direction — on mobile, collapse nav links when scrolling down
-  const [scrollingDown, setScrollingDown] = useState(false)
-  const [sectionInView, setSectionInView] = useState(false)
-  const [manuallyExpanded, setManuallyExpanded] = useState(false)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY
-      const goingDown = currentScrollY > lastScrollY && currentScrollY > 50
-      if (goingDown) setManuallyExpanded(false)
-      setScrollingDown(goingDown)
-      setLastScrollY(currentScrollY)
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [lastScrollY])
-
-  // Watch for Skills section — expand navbar when it's in view
-  useEffect(() => {
-    const skillsEl = document.getElementById('skills-heading')
-    if (!skillsEl) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setSectionInView(entry.isIntersecting),
-      { threshold: 0.1 }
-    )
-    observer.observe(skillsEl)
-    return () => observer.disconnect()
-  }, [])
-
-  const navCollapsed = !manuallyExpanded && !sectionInView && lastScrollY > 50
+  const navCollapsed = !navExpanded
 
   // Track active section
   useEffect(() => {
@@ -260,15 +230,26 @@ export default function Navbar() {
                 ))}
               </div>
 
-                {/* Arrow button to expand nav — visible only when collapsed on mobile */}
+                {/* Arrow to expand nav — visible when collapsed */}
                 <button
-                  onClick={() => setManuallyExpanded(true)}
+                  onClick={() => setNavExpanded(true)}
                   className={`sm:hidden p-1 rounded-lg hover:bg-white/10 transition-all ease-[cubic-bezier(0.25,0.1,0.25,1)] text-white/50 hover:text-white ${
-                    navCollapsed ? 'duration-300 opacity-100 max-w-8 scale-100' : 'duration-200 opacity-0 max-w-0 scale-75 overflow-hidden'
+                    navCollapsed ? 'duration-300 opacity-100 max-w-8 scale-100' : 'duration-200 opacity-0 max-w-0 scale-75 overflow-hidden pointer-events-none'
                   }`}
                   aria-label="Show navigation"
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Arrow to collapse nav — visible when expanded on mobile */}
+                <button
+                  onClick={() => setNavExpanded(false)}
+                  className={`sm:hidden p-1 rounded-lg hover:bg-white/10 transition-all ease-[cubic-bezier(0.25,0.1,0.25,1)] text-white/50 hover:text-white ${
+                    !navCollapsed ? 'duration-300 opacity-100 max-w-8 scale-100' : 'duration-200 opacity-0 max-w-0 scale-75 overflow-hidden pointer-events-none'
+                  }`}
+                  aria-label="Hide navigation"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
               </>
             )}

@@ -115,7 +115,7 @@ export default function NewsletterSection() {
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubscribe} className="space-y-3">
-                  <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex flex-row gap-2">
                     <Input
                       type="email"
                       placeholder="your@email.com"

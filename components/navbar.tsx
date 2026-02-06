@@ -155,9 +155,9 @@ export default function Navbar() {
                     className="object-cover"
                   />
                 </button>
-                <span className="hidden sm:inline">{time}</span>
+                <span className="inline text-[10px] sm:text-xs">{time}</span>
                 {!weatherLoading && temp !== null && (
-                  <span className="hidden md:inline-flex items-center gap-1.5">
+                  <span className="hidden sm:inline-flex items-center gap-1.5">
                     <span className="opacity-30">•</span>
                     <span>{icon}</span>
                     <span>{temp}°C</span>

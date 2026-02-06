@@ -28,7 +28,7 @@ export default function Page() {
       </a>
       
       {/* HERO: full-viewport section */}
-      <section className="px-4 pt-4 pb-16 lg:pb-4" aria-label="Hero section">
+      <section className="px-4 pt-4 pb-8 lg:pb-4" aria-label="Hero section">
         <div className="grid h-full grid-cols-1 gap-4 lg:grid-cols-[420px_1fr]">
           {/* LEFT: sticky and full height */}
           <aside className="lg:sticky lg:top-4 lg:h-[calc(100svh-2rem)]">
@@ -134,7 +134,7 @@ export default function Page() {
           </aside>
 
           {/* Terminal container with fixed height on mobile to prevent layout shifts */}
-          <div className="h-[520px] sm:h-[700px] lg:sticky lg:top-4 lg:h-[calc(100svh-2rem)]">
+          <div className="h-[600px] lg:sticky lg:top-4 lg:h-[calc(100svh-2rem)]">
             <RevealOnView as="div" intensity="hero" delay={0.2} className="h-full">
               <TerminalAnimation />
             </RevealOnView>

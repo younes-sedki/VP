@@ -30,7 +30,7 @@ const projects = [
 
 export default function ProjectsSection() {
   return (
-    <section className="px-4 py-16" aria-labelledby="projects-heading">
+    <section className="px-4 py-16 lg:py-24" aria-labelledby="projects-heading">
       <RevealOnView as="div" intensity="medium" className="mb-8">
         <div className="flex items-center gap-3">
           <h2 id="projects-heading" className="text-2xl font-bold tracking-tight">PROJECTS</h2>

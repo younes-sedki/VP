@@ -47,7 +47,7 @@ export default function ContactSection() {
           <div className="relative z-10 grid gap-10 lg:grid-cols-2">
 
             {/* SMALL CONTACT LINKS */}
-            <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-3" role="list">
+            <div className="lg:col-span-2 grid grid-cols-3 gap-3" role="list">
               {contactLinks.map((link) => {
                 const isLucideIcon = typeof link.icon !== 'string'
                 const Icon = isLucideIcon ? link.icon : null
@@ -85,7 +85,7 @@ export default function ContactSection() {
                         </svg>
                       ) : null}
                     </div>
-                        <span className="text-xs font-medium text-white text-center sm:text-sm">
+                        <span className="text-sm font-medium text-white text-center">
                           {link.name}
                         </span>
                       </a>

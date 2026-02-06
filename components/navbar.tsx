@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useLocalTime } from '@/hooks/use-local-time'
 import { useWeather } from '@/hooks/use-weather'
-import { Menu, X, ArrowLeft, RefreshCw } from 'lucide-react'
+import { ArrowLeft, RefreshCw } from 'lucide-react'
 import { SHOW_SECTIONS } from '@/lib/sections-config'
 import ProfileModal from '@/components/profile-modal'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -38,7 +38,6 @@ export default function Navbar() {
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [activeSection, setActiveSection] = useState(defaultActive)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [isReloading, setIsReloading] = useState(false)
 
@@ -114,7 +113,6 @@ export default function Navbar() {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' })
       setActiveSection(id)
-      setIsMobileMenuOpen(false)
     }
   }
 
@@ -124,24 +122,28 @@ export default function Navbar() {
   return (
     <>
       {/* Main Navbar - Centered */}
-      <nav className="fixed top-3 left-1/2 transform -translate-x-1/2 z-50 px-2 sm:px-4 w-[calc(100%-1rem)] sm:w-auto max-w-[calc(100vw-1rem)]">
+      <nav
+        className={`fixed top-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1rem)] max-w-3xl transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] ${
+          isVisible ? 'translate-y-0 opacity-100' : '-translate-y-16 opacity-0'
+        }`}
+      >
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/60 backdrop-blur-xl shadow-lg">
           {/* Glassmorphism effect */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
 
-          <div className="relative flex items-center justify-between gap-3 sm:gap-6 px-3 sm:px-5 py-1.5">
-            {/* Left: Brand with Time & Weather */}
-            <div className="flex items-center gap-3">
+          <div className="relative flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-5 py-1.5">
+            {/* Left: Brand + Avatar + Clock */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               {!isHome ? (
-                <Link href="/" className="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
+                <Link href="/" className="flex items-center gap-1.5 text-white/60 hover:text-white transition-colors">
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span className="text-sm font-bold text-white">YOUNES</span>
+                  <span className="text-xs sm:text-sm font-bold text-white">YOUNES</span>
                 </Link>
               ) : (
-                <span className="text-sm font-bold text-white">YOUNES</span>
+                <span className="text-xs sm:text-sm font-bold text-white">YOUNES</span>
               )}
-              <div className="h-3 w-px bg-white/20" />
-              <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-white/60">
+              <div className="h-3 w-px bg-white/20 flex-shrink-0" />
+              <div className="flex items-center gap-1.5 text-white/60 flex-shrink-0">
                 <button
                   onClick={() => setProfileModalOpen(true)}
                   className="relative w-5 h-5 rounded-full overflow-hidden ring-1 ring-white/20 hover:ring-white/40 transition-all flex-shrink-0 cursor-pointer"
@@ -155,9 +157,9 @@ export default function Navbar() {
                     className="object-cover"
                   />
                 </button>
-                <span className="inline text-[10px] sm:text-xs">{time}</span>
+                <span className="text-[10px] sm:text-xs tabular-nums">{time}</span>
                 {!weatherLoading && temp !== null && (
-                  <span className="hidden sm:inline-flex items-center gap-1.5">
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] sm:text-xs">
                     <span className="opacity-30">•</span>
                     <span>{icon}</span>
                     <span>{temp}°C</span>
@@ -166,7 +168,7 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* Center: Desktop Navigation or Reload */}
+            {/* Right: Navigation items inline — always visible */}
             {isBlog ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -187,70 +189,33 @@ export default function Navbar() {
                 </TooltipContent>
               </Tooltip>
             ) : (
-            <div ref={navContainerRef} className="hidden md:flex items-center gap-1 relative">
-              {/* Sliding indicator */}
-              <div
-                className="absolute bottom-0 h-[2px] rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
-                style={{
-                  left: indicator.left,
-                  width: indicator.width,
-                  opacity: indicator.width > 0 ? 1 : 0,
-                }}
-              />
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  ref={(el) => setNavItemRef(item.id, el)}
-                  onClick={() => handleNavClick(item.id)}
-                  className={`relative px-3 py-1.5 text-xs font-medium transition-colors duration-200 ${
-                    activeSection === item.id
-                      ? 'text-white'
-                      : 'text-white/50 hover:text-white/80'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            )}
-
-            {/* Mobile Menu Toggle */}
-            {!isBlog && (
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-1 rounded-lg hover:bg-white/10 transition-colors text-white/60 hover:text-white"
-              aria-label="Toggle mobile menu"
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-4 h-4" />
-              ) : (
-                <Menu className="w-4 h-4" />
-              )}
-            </button>
+              <div ref={navContainerRef} className="flex items-center gap-0.5 sm:gap-1 relative">
+                {/* Sliding indicator */}
+                <div
+                  className="absolute bottom-0 h-[2px] rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+                  style={{
+                    left: indicator.left,
+                    width: indicator.width,
+                    opacity: indicator.width > 0 ? 1 : 0,
+                  }}
+                />
+                {navItems.map((item) => (
+                  <button
+                    key={item.id}
+                    ref={(el) => setNavItemRef(item.id, el)}
+                    onClick={() => handleNavClick(item.id)}
+                    className={`relative px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium transition-colors duration-200 whitespace-nowrap ${
+                      activeSection === item.id
+                        ? 'text-white'
+                        : 'text-white/50 hover:text-white/80'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
-
-          {/* Mobile Menu */}
-          {isMobileMenuOpen && (
-            <div className="border-t border-white/10 px-4 py-3 space-y-1 md:hidden">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.id)}
-                  className={`relative w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                    activeSection === item.id
-                      ? 'bg-white/10 text-white'
-                      : 'text-white/50 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {activeSection === item.id && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-full bg-white" />
-                  )}
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </nav>
 

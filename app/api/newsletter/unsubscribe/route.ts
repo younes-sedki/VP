@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { resend, EMAIL_FROM, BASE_URL } from '@/lib/resend'
+import { getResend, EMAIL_FROM, BASE_URL } from '@/lib/resend'
 import UnsubscribeEmail from '@/emails/unsubscribe-email'
 import type { UnsubscribeResponse } from '@/lib/types'
 
@@ -62,7 +62,7 @@ export async function POST(req: Request): Promise<NextResponse<UnsubscribeRespon
     // ── Confirmation email (best effort) ────────────────────────────────
 
     try {
-      await resend.emails.send({
+      await getResend().emails.send({
         from: EMAIL_FROM,
         to: email,
         subject: "You've been unsubscribed",

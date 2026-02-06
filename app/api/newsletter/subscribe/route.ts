@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { resend, EMAIL_FROM, EMAIL_REPLY_TO, BASE_URL } from '@/lib/resend'
+import { getResend, EMAIL_FROM, EMAIL_REPLY_TO, BASE_URL } from '@/lib/resend'
 import WelcomeEmail from '@/emails/welcome-email'
 import type { SubscribeResponse } from '@/lib/types'
 
@@ -86,7 +86,7 @@ export async function POST(req: Request): Promise<NextResponse<SubscribeResponse
     const unsubscribeUrl = `${BASE_URL}/unsubscribe?token=${subscriber.unsubscribe_token}&email=${encodeURIComponent(email)}`
 
     try {
-      const { data, error: emailErr } = await resend.emails.send({
+      const { data, error: emailErr } = await getResend().emails.send({
         from: EMAIL_FROM,
         to: email,
         replyTo: EMAIL_REPLY_TO,

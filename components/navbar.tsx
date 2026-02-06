@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useLocalTime } from '@/hooks/use-local-time'
 import { useWeather } from '@/hooks/use-weather'
-import { ArrowLeft, RefreshCw } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Home } from 'lucide-react'
 import { SHOW_SECTIONS } from '@/lib/sections-config'
 import ProfileModal from '@/components/profile-modal'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -31,6 +31,8 @@ export default function Navbar() {
   const isAdmin = pathname?.startsWith('/npe')
   const isBlog = pathname?.startsWith('/blog')
   const isHome = pathname === '/'
+
+  const isOtherPage = !isHome && !isBlog && !isAdmin
 
   const navItems = isBlog ? [] : homeNavItems
   const defaultActive = navItems[0]?.id || ''
@@ -203,6 +205,17 @@ export default function Navbar() {
                   Reload for new tweets
                 </TooltipContent>
               </Tooltip>
+            ) : isOtherPage ? (
+              <>
+                <div className="h-3 w-px bg-white/20 flex-shrink-0" />
+                <Link
+                  href="/"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] sm:text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors whitespace-nowrap"
+                >
+                  <Home className="w-3 h-3" />
+                  Go Home
+                </Link>
+              </>
             ) : (
               <>
                 {/* Divider between brand and nav — animates with nav */}

@@ -1,9 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import Link from 'next/link'
-import { ArrowRight, Home, BookOpen } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import DotGridShader from '@/components/DotGridShader'
 
 const terminalLines = [
@@ -22,11 +19,9 @@ const terminalLines = [
 export default function NotFound() {
   const [visibleLines, setVisibleLines] = useState(0)
   const [currentText, setCurrentText] = useState('')
-  const [showButtons, setShowButtons] = useState(false)
 
   const animateStep = useCallback(() => {
     if (visibleLines >= terminalLines.length) {
-      setTimeout(() => setShowButtons(true), 300)
       return
     }
 
@@ -108,33 +103,6 @@ export default function NotFound() {
                 $ <span className="inline-block w-2 h-4 bg-emerald-400 ml-0.5 animate-pulse" />
               </div>
             )}
-          </div>
-
-          {/* Action buttons — fade in after animation */}
-          <div
-            className={`relative z-10 px-6 md:px-8 pb-6 md:pb-8 flex flex-col sm:flex-row gap-3 transition-all duration-500 ${
-              showButtons ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-          >
-            <Button asChild size="lg" className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white">
-              <Link href="/">
-                <Home className="mr-2 h-4 w-4" />
-                Go Home
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="rounded-full border-emerald-500/50 bg-transparent hover:bg-emerald-500/10 hover:border-emerald-500 text-emerald-400"
-            >
-              <Link href="/blog">
-                <BookOpen className="mr-2 h-4 w-4" />
-                Explore Blog
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
           </div>
         </div>
       </div>

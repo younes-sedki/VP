@@ -76,6 +76,7 @@ export default function Navbar() {
 
   // Handle scroll direction — on mobile, collapse nav links when scrolling down
   const [scrollingDown, setScrollingDown] = useState(false)
+  const [sectionInView, setSectionInView] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -87,6 +88,21 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [lastScrollY])
+
+  // Watch for Skills section — expand navbar when it's in view
+  useEffect(() => {
+    const skillsEl = document.getElementById('skills-heading')
+    if (!skillsEl) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setSectionInView(entry.isIntersecting),
+      { threshold: 0.1 }
+    )
+    observer.observe(skillsEl)
+    return () => observer.disconnect()
+  }, [])
+
+  const navCollapsed = scrollingDown && !sectionInView
 
   // Track active section
   useEffect(() => {
@@ -192,13 +208,13 @@ export default function Navbar() {
                 {/* Divider between brand and nav — animates with nav */}
                 <div
                   className={`h-3 w-px bg-white/20 flex-shrink-0 ease-[cubic-bezier(0.25,0.1,0.25,1)] sm:opacity-100 transition-all ${
-                    scrollingDown ? 'duration-300 opacity-0 w-0 sm:opacity-100 sm:w-px' : 'duration-700 opacity-100'
+                    navCollapsed ? 'duration-300 opacity-0 w-0 sm:opacity-100 sm:w-px' : 'duration-700 opacity-100'
                   }`}
                 />
                 <div
                   ref={navContainerRef}
                   className={`flex items-center gap-0.5 sm:gap-1 relative ease-[cubic-bezier(0.25,0.1,0.25,1)] origin-right transition-all ${
-                    scrollingDown
+                    navCollapsed
                       ? 'duration-300 max-w-0 opacity-0 scale-95 overflow-hidden sm:max-w-none sm:opacity-100 sm:scale-100'
                       : 'duration-700 max-w-[500px] opacity-100 scale-100'
                   }`}

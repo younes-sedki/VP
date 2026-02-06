@@ -874,23 +874,27 @@ export default function AdminLoginPage() {
                     </Button>
                   </div>
                   {replyingToId === t.id && (
-                    <div className="mt-2 space-y-2">
+                    <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
+                      <div className="flex items-center gap-2 text-xs text-emerald-400">
+                        <div className="w-0.5 h-3 rounded-full bg-emerald-500" />
+                        Replying to @{t.handle}
+                      </div>
                       <Textarea
-                        rows={2}
+                        rows={3}
                         value={replyBody}
                         onChange={(e) => setReplyBody(e.target.value)}
-                        placeholder="Your reply as admin..."
-                        className="bg-neutral-950/60 border-white/15 text-sm"
+                        placeholder="Write your reply..."
+                        className="bg-neutral-900/80 border-white/10 text-sm rounded-xl resize-none focus:border-emerald-500/40 focus:ring-0 placeholder:text-white/30"
                       />
                       {replyError && (
-                        <p className="text-xs text-red-400">{replyError}</p>
+                        <p className="text-xs text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/20">{replyError}</p>
                       )}
                       <div className="flex justify-end gap-2">
                         <Button
                           type="button"
                           size="sm"
                           variant="ghost"
-                          className="h-8 px-3 text-xs"
+                          className="h-8 px-4 text-xs rounded-full text-white/50 hover:text-white hover:bg-white/10"
                           onClick={() => {
                             setReplyingToId(null)
                             setReplyBody('')
@@ -902,7 +906,7 @@ export default function AdminLoginPage() {
                         <Button
                           type="button"
                           size="sm"
-                          className="h-8 px-4 text-xs bg-emerald-500 hover:bg-emerald-400 text-black"
+                          className="h-8 px-5 text-xs rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-medium"
                           disabled={replyLoading || !replyBody.trim()}
                           onClick={() => submitAdminReply(t.id)}
                         >

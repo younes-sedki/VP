@@ -35,7 +35,6 @@ export default function Navbar() {
   const navItems = isBlog ? [] : homeNavItems
   const defaultActive = navItems[0]?.id || ''
 
-  const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [activeSection, setActiveSection] = useState(defaultActive)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
@@ -75,15 +74,13 @@ export default function Navbar() {
     coords?.longitude || null
   )
 
-  // Handle scroll behavior — on mobile, collapse nav links when scrolling down
+  // Handle scroll direction — on mobile, collapse nav links when scrolling down
   const [scrollingDown, setScrollingDown] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
-      const goingDown = currentScrollY > lastScrollY && currentScrollY > 50
-      setIsVisible(currentScrollY < lastScrollY || currentScrollY < 50)
-      setScrollingDown(goingDown)
+      setScrollingDown(currentScrollY > lastScrollY && currentScrollY > 50)
       setLastScrollY(currentScrollY)
     }
 
@@ -127,11 +124,9 @@ export default function Navbar() {
     <>
       {/* Main Navbar - Centered */}
       <nav
-        className={`fixed top-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1rem)] max-w-3xl transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] ${
-          isVisible ? 'translate-y-0 opacity-100' : '-translate-y-16 opacity-0'
-        }`}
+        className="fixed top-3 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
       >
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/60 backdrop-blur-xl shadow-lg">
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/60 backdrop-blur-xl shadow-lg w-fit">
           {/* Glassmorphism effect */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
 

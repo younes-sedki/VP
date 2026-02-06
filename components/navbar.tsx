@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useLocalTime } from '@/hooks/use-local-time'
 import { useWeather } from '@/hooks/use-weather'
-import { ArrowLeft, RefreshCw, Home } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Home, ChevronRight } from 'lucide-react'
 import { SHOW_SECTIONS } from '@/lib/sections-config'
 import ProfileModal from '@/components/profile-modal'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -79,11 +79,14 @@ export default function Navbar() {
   // Handle scroll direction — on mobile, collapse nav links when scrolling down
   const [scrollingDown, setScrollingDown] = useState(false)
   const [sectionInView, setSectionInView] = useState(false)
+  const [manuallyExpanded, setManuallyExpanded] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
-      setScrollingDown(currentScrollY > lastScrollY && currentScrollY > 50)
+      const goingDown = currentScrollY > lastScrollY && currentScrollY > 50
+      if (goingDown) setManuallyExpanded(false)
+      setScrollingDown(goingDown)
       setLastScrollY(currentScrollY)
     }
 
@@ -104,7 +107,7 @@ export default function Navbar() {
     return () => observer.disconnect()
   }, [])
 
-  const navCollapsed = scrollingDown && !sectionInView
+  const navCollapsed = !manuallyExpanded && !sectionInView && lastScrollY > 50
 
   // Track active section
   useEffect(() => {
@@ -210,7 +213,7 @@ export default function Navbar() {
                 <div className="h-3 w-px bg-white/20 flex-shrink-0" />
                 <Link
                   href="/"
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] sm:text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] sm:text-xs font-medium text-white hover:text-white/70 transition-colors whitespace-nowrap"
                 >
                   <Home className="w-3 h-3" />
                   Go Home
@@ -256,6 +259,17 @@ export default function Navbar() {
                   </button>
                 ))}
               </div>
+
+                {/* Arrow button to expand nav — visible only when collapsed on mobile */}
+                <button
+                  onClick={() => setManuallyExpanded(true)}
+                  className={`sm:hidden p-1 rounded-lg hover:bg-white/10 transition-all ease-[cubic-bezier(0.25,0.1,0.25,1)] text-white/50 hover:text-white ${
+                    navCollapsed ? 'duration-300 opacity-100 max-w-8 scale-100' : 'duration-200 opacity-0 max-w-0 scale-75 overflow-hidden'
+                  }`}
+                  aria-label="Show navigation"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </>
             )}
           </div>

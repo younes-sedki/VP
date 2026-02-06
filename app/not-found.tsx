@@ -13,7 +13,6 @@ const terminalLines = [
   { type: 'output', text: '404' },
   { type: 'command', text: '$ cat /var/log/suggestions.txt' },
   { type: 'success', text: '→ Try going back to the homepage' },
-  { type: 'success', text: '→ Or explore the blog instead' },
 ]
 
 export default function NotFound() {

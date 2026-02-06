@@ -28,6 +28,7 @@ const homeNavItems: NavItem[] = [
 
 export default function Navbar() {
   const pathname = usePathname()
+  const isAdmin = pathname?.startsWith('/npe')
   const isBlog = pathname?.startsWith('/blog')
   const isHome = pathname === '/'
 
@@ -116,6 +117,9 @@ export default function Navbar() {
       setIsMobileMenuOpen(false)
     }
   }
+
+  // Hide navbar on admin pages
+  if (isAdmin) return null
 
   return (
     <>

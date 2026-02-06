@@ -1,38 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { CheckCircle2, AlertCircle } from "lucide-react"
+import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
+import { motion } from "framer-motion"
 import RevealOnView from "@/components/reveal-on-view"
 import DotGridShader from "@/components/DotGridShader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-
-const newsletterTopics = [
-  {
-    title: "Project Progress Reports",
-    description: "Weekly updates on challenges overcome and milestones reached",
-  },
-  {
-    title: "Work Showcases",
-    description: "Recently completed projects with behind-the-scenes insights",
-  },
-  {
-    title: "Work-in-Progress Previews",
-    description: "Exclusive early looks at what I'm currently developing",
-  },
-  {
-    title: "Skills & Tools Updates",
-    description: "New techniques and tools discovering that improve my work",
-  },
-  {
-    title: "Industry Observations",
-    description: "Reflections on trends and changes in the field",
-  },
-  {
-    title: "Wins & Lessons",
-    description: "Celebrating successes and sharing valuable learnings",
-  },
-]
 
 export default function NewsletterSection() {
   const [email, setEmail] = useState("")
@@ -87,79 +61,61 @@ export default function NewsletterSection() {
   return (
     <section className="px-4 py-16 lg:py-24" aria-labelledby="newsletter-heading">
       <div className="mx-auto max-w-6xl">
-        {/* Header */}
-        <RevealOnView as="div" intensity="soft" className="mb-12">
-          <h2
-            id="newsletter-heading"
-            className="text-3xl font-black tracking-tight sm:text-4xl"
-          >
-            Weekly Newsletter
-          </h2>
-          <p className="mt-3 max-w-2xl text-lg text-white/60">
-            Stay updated with my latest projects, insights, and learnings delivered straight to your inbox every week.
-          </p>
-        </RevealOnView>
+        {/* Newsletter Card */}
+        <RevealOnView
+          as="div"
+          intensity="medium"
+          className="relative overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/40 backdrop-blur-sm"
+        >
+          {/* Texture background */}
+          <div className="pointer-events-none absolute inset-0 opacity-5 mix-blend-soft-light">
+            <DotGridShader />
+          </div>
 
-        {/* Main Content Grid */}
-        <div className="grid gap-6 md:grid-cols-3">
-          {/* Newsletter Topics */}
-          {newsletterTopics.map((topic, idx) => (
-            <RevealOnView
-              key={topic.title}
-              as="div"
-              intensity="soft"
-              delay={idx * 0.1}
-              className="relative overflow-hidden rounded-2xl border-2 border-white/20 bg-neutral-900/40 p-6 backdrop-blur-sm"
-            >
-              {/* Texture background */}
-              <div className="pointer-events-none absolute inset-0 opacity-5 mix-blend-soft-light">
-                <DotGridShader />
+          {/* Subtle gradient accent */}
+          <div className="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl" />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-8 p-8 sm:p-10 md:p-12">
+            {/* Left: Text */}
+            <div className="flex-1 max-w-lg">
+              <div className="flex items-center gap-3 mb-3">
+                <h2 id="newsletter-heading" className="text-2xl font-bold tracking-tight sm:text-3xl text-white">Stay in the loop</h2>
+                <div className="relative">
+                  <div className="h-2 w-2 rounded-full bg-blue-500" />
+                  <div className="absolute inset-0 h-2 w-2 animate-ping rounded-full bg-blue-500 opacity-75" />
+                </div>
               </div>
-
-              <div className="relative z-10">
-                <h3 className="mb-2 text-sm font-bold text-white">{topic.title}</h3>
-                <p className="text-xs text-white/60">{topic.description}</p>
-              </div>
-            </RevealOnView>
-          ))}
-        </div>
-
-        {/* Subscription Section */}
-        <div className="mt-12">
-          <RevealOnView
-            as="div"
-            intensity="soft"
-            className="relative overflow-hidden rounded-2xl border-2 border-white/20 bg-neutral-900/40 p-6 sm:p-8 backdrop-blur-sm"
-          >
-            {/* Texture background */}
-            <div className="pointer-events-none absolute inset-0 opacity-5 mix-blend-soft-light">
-              <DotGridShader />
+              <p className="text-sm text-white/50 leading-relaxed">
+                Get updates on my latest projects, insights, and discoveries. No spam, unsubscribe anytime.
+              </p>
             </div>
 
-            <div className="relative z-10">
-              <div className="mb-6">
-                <h3 className="mb-2 text-lg font-bold text-white">Subscribe to my newsletter</h3>
-                <p className="text-sm text-white/60">
-                  Get exclusive insights about my work, projects, and lessons learned.
-                </p>
-              </div>
-
+            {/* Right: Form / Status */}
+            <div className="flex-1 max-w-md w-full">
               {submitted ? (
-                <div className="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3 border border-white/10">
-                  <CheckCircle2 className="h-5 w-5 text-white/60 flex-shrink-0" aria-hidden="true" />
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-3 rounded-xl bg-emerald-500/10 px-5 py-3.5 border border-emerald-500/20"
+                >
+                  <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0" aria-hidden="true" />
                   <div>
-                    <p className="text-sm font-medium text-white">Thank you for subscribing!</p>
-                    <p className="text-xs text-white/60">Check your email to confirm.</p>
+                    <p className="text-sm font-medium text-white">Subscribed!</p>
+                    <p className="text-xs text-white/50">Check your email to confirm.</p>
                   </div>
-                </div>
+                </motion.div>
               ) : error ? (
-                <div className="flex items-center gap-3 rounded-xl bg-red-500/10 px-4 py-3 border border-red-500/30">
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-3 rounded-xl bg-red-500/10 px-5 py-3.5 border border-red-500/20"
+                >
                   <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" aria-hidden="true" />
                   <p className="text-sm text-red-300">{error}</p>
-                </div>
+                </motion.div>
               ) : (
                 <form onSubmit={handleSubscribe} className="space-y-3">
-                  <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Input
                       type="email"
                       placeholder="your@email.com"
@@ -167,26 +123,28 @@ export default function NewsletterSection() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="flex-1 rounded-lg border-2 border-white/20 bg-neutral-900/50 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none transition-colors"
+                      className="flex-1 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-white/25 focus:ring-0 focus:outline-none transition-colors text-sm h-11 px-4"
                       aria-label="Email address for newsletter subscription"
                     />
                     <Button
                       type="submit"
                       disabled={isLoading || !email}
-                      className="rounded-lg bg-white text-neutral-950 hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium px-6"
+                      className="rounded-xl bg-white text-neutral-950 hover:bg-white/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-semibold px-6 h-11 text-sm whitespace-nowrap"
                       aria-label="Subscribe to newsletter"
                     >
-                      {isLoading ? "..." : "Subscribe"}
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Subscribing...
+                        </>
+                      ) : "Subscribe"}
                     </Button>
                   </div>
-                  <p className="text-xs text-white/40">
-                    No spam. Unsubscribe anytime. I respect your inbox.
-                  </p>
                 </form>
               )}
             </div>
-          </RevealOnView>
-        </div>
+          </div>
+        </RevealOnView>
       </div>
     </section>
   )

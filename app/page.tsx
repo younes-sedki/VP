@@ -17,15 +17,7 @@ import ProjectsSection from "@/components/projects-section"
 
 export const dynamic = 'force-dynamic'
 
-// ===========================================
-// SECTION VISIBILITY CONFIG
-// Set to false to hide a section
-// ===========================================
-const SHOW_SECTIONS = {
-  projects: false, // Set to false to hide Projects
-  skills: true, // Set to false to hide Skills
-  contact: true, // Set to false to hide Contact
-}
+import { SHOW_SECTIONS } from '@/lib/sections-config'
 
 export default function Page() {
   return (

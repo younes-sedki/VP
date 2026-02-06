@@ -75,8 +75,17 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   const adminLikedText = tweet.likedByAdmin ? ' · Liked by Younes SEDKI' : ''
   const finalDescription = description + adminLikedText
   
-  // Prepare image
-  let imageUrl = `${baseUrl}/og-image.png` // Default OG image
+  // Build dynamic OG image URL with tweet data
+  const ogParams = new URLSearchParams({
+    author: authorName,
+    content: tweet.content || '',
+    handle: tweet.handle || '',
+    admin: tweet.avatar === 'admin' ? '1' : '0',
+    likes: String(tweet.likes || 0),
+  })
+  
+  // Use tweet image if available, otherwise dynamic OG
+  let imageUrl = `${baseUrl}/api/og?${ogParams.toString()}`
   if (tweet.image && tweet.fileType?.startsWith('image/')) {
     // Use tweet image if it's a full URL, otherwise construct it
     if (tweet.image.startsWith('http://') || tweet.image.startsWith('https://')) {

@@ -32,6 +32,15 @@ function InnerBlogTweetSection() {
     void fetchTweets()
   }, [fetchTweets])
 
+  // Listen for reload event from navbar
+  useEffect(() => {
+    const handleReload = () => {
+      void fetchTweets()
+    }
+    window.addEventListener('reload-tweets', handleReload)
+    return () => window.removeEventListener('reload-tweets', handleReload)
+  }, [fetchTweets])
+
   const typedTweets: TweetFromApi[] = useMemo(() => {
     const allTweets = (tweets as unknown as TweetFromApi[]) ?? []
     return allTweets
@@ -42,6 +51,7 @@ function InnerBlogTweetSection() {
     <>
       <ProfileSetupModal />
       <section
+        id="blog-tweets"
         aria-label="Latest tweets"
         className="rounded-3xl border border-white/10 bg-neutral-900/60 overflow-hidden"
       >

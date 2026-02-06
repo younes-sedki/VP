@@ -92,19 +92,16 @@ const AvatarDisplay = ({ avatar, avatarImage }: { avatar: string; avatarImage?: 
         width={40}
         height={40}
         className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+        unoptimized={avatarImage.startsWith('data:')}
       />
     )
   }
 
-  // Fallback avatar for users/guests: consistent placeholder image
+  // Fallback avatar: colored circle with initial
   return (
-    <Image
-      src="/placeholder-user.jpg"
-      alt="User avatar"
-      width={40}
-      height={40}
-      className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-    />
+    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+      {(avatar || '?')[0]?.toUpperCase()}
+    </div>
   )
 }
 

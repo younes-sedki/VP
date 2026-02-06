@@ -77,7 +77,7 @@ export function useTweets() {
   }, [])
 
   // Create a new tweet with optimistic update
-  const createTweet = useCallback(async (content: string, author: string, handle: string, email?: string) => {
+  const createTweet = useCallback(async (content: string, author: string, handle: string, email?: string, avatarImage?: string) => {
     // Get CSRF token for production
     const csrfToken = process.env.NODE_ENV === 'production' ? await getCsrfToken() : null
     
@@ -88,7 +88,7 @@ export function useTweets() {
       author,
       handle,
       avatar: 'user',
-      avatarImage: '/placeholder-user.jpg',
+      avatarImage: avatarImage || null,
       content,
       created_at: new Date().toISOString(),
       likes: 0,
@@ -108,7 +108,7 @@ export function useTweets() {
       const response = await fetch('/api/tweets', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ content, author, handle, email })
+        body: JSON.stringify({ content, author, handle, email, avatarImage })
       })
       
       if (!response.ok) {

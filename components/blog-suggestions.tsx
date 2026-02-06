@@ -88,7 +88,7 @@ const suggestions = [
 
 export default function BlogSuggestions() {
   return (
-    <section className="mt-12 space-y-6">
+    <section id="blog-topics" className="mt-12 space-y-6">
       <div className="flex items-center gap-2">
         <Sparkles className="w-5 h-5 text-emerald-400" />
         <h2 className="text-xl font-bold text-white">Explore Topics</h2>

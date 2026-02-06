@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useTweets } from '@/hooks/use-tweets'
 import { validateDisplayName } from '@/lib/validation'
+import { generateAvatarDataUrl } from '@/lib/avatar-generator'
+import Image from 'next/image'
 
 const STORAGE_KEY = 'tweetUserInfo'
 
@@ -119,11 +121,15 @@ export function ProfileSetupModal() {
       return
     }
 
+    // Generate unique avatar
+    const avatarImage = generateAvatarDataUrl(displayName.trim(), 200)
+
     // Save to localStorage
     const profile = {
       displayName: displayName.trim(),
       username: generatedUsername,
       email: '', // Optional, can be added later
+      avatarImage,
     }
 
     try {
@@ -172,10 +178,28 @@ export function ProfileSetupModal() {
 
           {generatedUsername && (
             <div className="bg-neutral-800/50 border border-emerald-500/20 rounded-lg p-3">
-              <div className="text-xs text-white/50 mb-1">Your username will be:</div>
-              <div className="text-sm font-mono text-emerald-300">@{generatedUsername}</div>
+              <div className="flex items-center gap-3">
+                {/* Avatar preview */}
+                {displayName.trim() && (
+                  <div className="flex-shrink-0">
+                    <Image
+                      src={generateAvatarDataUrl(displayName.trim(), 200)}
+                      alt="Your avatar"
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-full"
+                      unoptimized
+                    />
+                  </div>
+                )}
+                <div>
+                  <div className="text-xs text-white/50 mb-0.5">Your profile:</div>
+                  <div className="text-sm font-semibold text-white">{displayName.trim()}</div>
+                  <div className="text-sm font-mono text-emerald-300">@{generatedUsername}</div>
+                </div>
+              </div>
               {isGenerating && (
-                <div className="text-xs text-white/40 mt-1">Checking availability...</div>
+                <div className="text-xs text-white/40 mt-2">Checking availability...</div>
               )}
             </div>
           )}

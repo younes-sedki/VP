@@ -8,13 +8,14 @@ import TwitterAvatar from './twitter-avatar'
 import TwitterButton from './twitter-button'
 import { showToast } from '@/lib/toast-helpers'
 import { validateTweetContent, validateDisplayName } from '@/lib/validation'
+import { generateAvatarDataUrl } from '@/lib/avatar-generator'
 
 interface TwitterPostFormProps {
   placeholder: string
   isComment?: boolean
   postId?: string
   onSuccess?: () => void
-  createTweet?: (content: string, author: string, handle: string, email?: string) => Promise<any>
+  createTweet?: (content: string, author: string, handle: string, email?: string, avatarImage?: string) => Promise<any>
   currentUser?: {
     username?: string
     name?: string
@@ -33,11 +34,14 @@ export default function TwitterPostForm({
   const [percentage, setPercentage] = useState(0)
   const [body, setBody] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(false)
-  const [profile, setProfile] = useState<{ displayName: string; username: string; email: string }>({
-    displayName: '',
-    username: '',
-    email: '',
-  })
+  const [profile, setProfile] = useState<{ displayName: string; username: string; email: string; avatarImage?: string }>(
+    {
+      displayName: '',
+      username: '',
+      email: '',
+      avatarImage: undefined,
+    }
+  )
   const [profileLoaded, setProfileLoaded] = useState(false)
   const [profileEditing, setProfileEditing] = useState(false)
   const [canEditProfile, setCanEditProfile] = useState(true)
@@ -85,10 +89,19 @@ export default function TwitterPostForm({
           const saved = localStorage.getItem('tweetUserInfo')
           if (saved) {
             const parsed = JSON.parse(saved)
+            // If no avatarImage stored, generate one from display name
+            let avatarImage = parsed.avatarImage
+            if (!avatarImage && parsed.displayName) {
+              avatarImage = generateAvatarDataUrl(parsed.displayName, 200)
+              // Save it back so it persists
+              parsed.avatarImage = avatarImage
+              localStorage.setItem('tweetUserInfo', JSON.stringify(parsed))
+            }
             setProfile({
               displayName: parsed.displayName || parsed.username || 'Guest',
               username: parsed.username || 'guest',
               email: parsed.email || '',
+              avatarImage,
             })
             setProfileEditing(false)
             setCanEditProfile(false)
@@ -111,6 +124,7 @@ export default function TwitterPostForm({
           displayName: e.detail.displayName || e.detail.username || 'Guest',
           username: e.detail.username || 'guest',
           email: e.detail.email || '',
+          avatarImage: e.detail.avatarImage || generateAvatarDataUrl(e.detail.displayName || 'Guest', 200),
         })
         setProfileEditing(false)
         setCanEditProfile(false)
@@ -148,10 +162,13 @@ export default function TwitterPostForm({
       return
     }
 
+    const avatarImage = profile.avatarImage || generateAvatarDataUrl(displayName, 200)
+
     const payload = {
       displayName,
       username,
       email: profile.email.trim(),
+      avatarImage,
     }
 
     if (typeof window !== 'undefined') {
@@ -197,7 +214,7 @@ export default function TwitterPostForm({
         return
       }
 
-      await createTweet(body, author, handle, email)
+      await createTweet(body, author, handle, email, profile.avatarImage)
       showToast.success(isComment ? 'Reply posted!' : 'Post created!')
       setBody('')
       onSuccess?.()
@@ -222,7 +239,7 @@ export default function TwitterPostForm({
         <TwitterAvatar
           username={profile.username || 'guest'}
           avatar="user"
-          avatarImage={undefined}
+          avatarImage={profile.avatarImage}
           size="small"
         />
       </div>

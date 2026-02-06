@@ -360,23 +360,25 @@ export default function TwitterPostFeed({
         />
       )}
       <div
-        className={`border-white/10 px-4 py-3 ${isDetailPage ? 'border-b-0' : 'border-b'} transition ${isDetailPage ? '' : 'hover:bg-white/[3%] cursor-pointer'}`}
+        className={`px-4 py-4 ${isDetailPage ? '' : 'border-b border-white/[0.06]'} transition-colors duration-200 ${isDetailPage ? '' : 'hover:bg-white/[0.02] cursor-pointer'}`}
         onClick={goToPost}
       >
-        <div className="flex items-start gap-2 relative">
-          <TwitterAvatar
-            username={data.handle || data.author}
-            avatar={data.avatar}
-            avatarImage={data.avatarImage}
-            size="small"
-          />
+        <div className="flex items-start gap-3 relative">
+          <div className="flex-shrink-0 mt-0.5">
+            <TwitterAvatar
+              username={data.handle || data.author}
+              avatar={data.avatar}
+              avatarImage={data.avatarImage}
+              size="small"
+            />
+          </div>
           <div className="flex flex-col flex-1 min-w-0">
-            <div className="flex gap-1 items-center flex-wrap">
+            <div className="flex items-center gap-1.5">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-1">
                     <h5
-                      className="text-white text-xs font-semibold cursor-pointer hover:text-emerald-400 transition-colors"
+                      className="text-white text-[13px] font-semibold cursor-pointer hover:underline decoration-white/30 transition-colors"
                       onClick={(e) => {
                         e.stopPropagation()
                         if (data.avatar === 'admin') {
@@ -389,7 +391,7 @@ export default function TwitterPostFeed({
                     {data.avatar === 'admin' && (
                       <span title="Verified admin">
                         <BadgeCheck 
-                          className="w-3 h-3 text-emerald-400 fill-emerald-400 flex-shrink-0" 
+                          className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400 flex-shrink-0" 
                           aria-label="Verified admin"
                         />
                       </span>
@@ -400,42 +402,35 @@ export default function TwitterPostFeed({
                   {data.avatar === 'admin' ? 'View profile' : 'Visitor'}
                 </TooltipContent>
               </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <h6
-                    className="text-white/60 text-xs cursor-pointer hover:text-emerald-400 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (data.avatar === 'admin') {
-                        setProfileModalOpen(true)
-                      }
-                    }}
-                  >
-                    @{data.handle || data.author}
-                  </h6>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10">
-                  {data.avatar === 'admin' ? 'View profile' : 'Visitor'}
-                </TooltipContent>
-              </Tooltip>
-              <span className="text-white/60 text-xs">·</span>
-              <span className="text-white/60 text-xs">{createdAt}</span>
+              <span
+                className="text-white/40 text-xs cursor-pointer hover:underline decoration-white/20"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (data.avatar === 'admin') {
+                    setProfileModalOpen(true)
+                  }
+                }}
+              >
+                @{data.handle || data.author}
+              </span>
+              <span className="text-white/20 text-xs">·</span>
+              <span className="text-white/40 text-xs">{createdAt}</span>
               {data.edited && (
                 <>
-                  <span className="text-white/60 text-xs">·</span>
-                  <span className="text-white/60 text-[10px]">Edited</span>
+                  <span className="text-white/20 text-xs">·</span>
+                  <span className="text-white/30 text-[10px] italic">edited</span>
                 </>
               )}
             </div>
 
-            <div className="text-white text-xs mt-0.5 leading-relaxed">
+            <div className="text-white/90 text-[13px] mt-1 leading-[1.55] whitespace-pre-wrap">
               <RichTextContent content={data.content} />
             </div>
 
             {/* Latest admin reply preview (if any) */}
             {latestAdminReply && (
-              <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-[11px] text-white/90">
-                <div className="flex items-start gap-2">
+              <div className="mt-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5">
+                <div className="flex items-start gap-2.5">
                   <TwitterAvatar
                     username={ADMIN_HANDLE}
                     avatar="admin"
@@ -443,24 +438,24 @@ export default function TwitterPostFeed({
                     size="small"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1 flex-wrap">
-                      <span className="text-xs font-semibold text-white">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[12px] font-semibold text-white">
                         {ADMIN_DISPLAY_NAME}
                       </span>
                       <BadgeCheck 
                         className="w-3 h-3 text-emerald-400 fill-emerald-400 flex-shrink-0" 
                         aria-label="Verified admin"
                       />
-                      <span className="text-[10px] text-white/60">
+                      <span className="text-[11px] text-white/30">
                         @{ADMIN_HANDLE}
                       </span>
                       {latestAdminReply.timestamp && (
-                        <span className="text-white/40 text-[10px]">
+                        <span className="text-white/20 text-[10px]">
                           · {new Date(latestAdminReply.timestamp).toLocaleString()}
                         </span>
                       )}
                     </div>
-                    <div className="mt-0.5 text-[11px] text-white/80 whitespace-pre-wrap leading-relaxed">
+                    <div className="mt-0.5 text-[12px] text-white/70 whitespace-pre-wrap leading-relaxed">
                       {latestAdminReply.content}
                     </div>
                   </div>
@@ -469,19 +464,19 @@ export default function TwitterPostFeed({
             )}
             {/* File attachments (PDF, GIF, Images) */}
             {(images.length > 0 || data.fileType) && (
-              <div className="mt-2">
+              <div className="mt-2.5">
                 {/* PDF File */}
                 {data.fileType === 'pdf' && data.image && (
                   <div 
-                    className="rounded-lg border border-white/10 bg-neutral-900/50 p-4 hover:bg-neutral-900/70 transition-colors cursor-pointer"
+                    className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 hover:bg-white/[0.04] transition-colors cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation()
                       window.open(data.image || '', '_blank')
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-red-500/20 flex items-center justify-center">
-                        <FileText className="w-6 h-6 text-red-400" />
+                      <div className="w-11 h-11 rounded-lg bg-red-500/15 flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-red-400" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-white text-sm font-medium truncate">
@@ -497,7 +492,7 @@ export default function TwitterPostFeed({
                 {/* GIF File */}
                 {data.fileType === 'gif' && data.image && (
                   <div 
-                    className="rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:opacity-90 transition-opacity max-w-xs"
+                    className="rounded-xl overflow-hidden border border-white/[0.06] cursor-pointer hover:opacity-90 transition-opacity max-w-xs"
                     onClick={(e) => {
                       e.stopPropagation()
                       setSelectedImageIndex(0)
@@ -522,7 +517,7 @@ export default function TwitterPostFeed({
                 {/* Regular Images */}
                 {images.length > 0 && data.fileType !== 'pdf' && data.fileType !== 'gif' && (
                   <div 
-                    className={`rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:opacity-90 transition-opacity ${
+                    className={`rounded-xl overflow-hidden border border-white/[0.06] cursor-pointer hover:opacity-90 transition-opacity ${
                       images.length === 1 
                         ? 'max-w-xs' 
                         : images.length === 2 
@@ -566,40 +561,45 @@ export default function TwitterPostFeed({
                 )}
               </div>
             )}
-            <div className="flex gap-3 mt-1">
+            <div className="flex items-center gap-5 mt-2.5 -ml-1">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div
-                    className="flex flex-row items-center text-white/60 gap-1 cursor-pointer transition hover:text-emerald-400"
+                    className="flex items-center gap-1.5 text-white/40 cursor-pointer transition-colors duration-200 hover:text-emerald-400 group rounded-full px-2 py-1 -mx-2 -my-1 hover:bg-emerald-400/5"
                     onClick={handleShare}
                   >
-                    <RiShareLine size={14} />
-                    <p className="text-xs">Share</p>
+                    <RiShareLine size={15} className="transition-transform duration-200 group-hover:scale-110" />
+                    <span className="text-xs">Share</span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10">
                   Share this tweet
                 </TooltipContent>
               </Tooltip>
-              <div className="flex flex-row items-center text-white/60 gap-1.5">
+
+              <div className="flex items-center gap-1.5">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
-                      className="flex flex-row items-center gap-1 cursor-pointer transition hover:text-red-400"
+                      className={`flex items-center gap-1.5 cursor-pointer transition-colors duration-200 group rounded-full px-2 py-1 -mx-2 -my-1 ${
+                        hasLiked 
+                          ? 'text-red-400 hover:bg-red-400/5' 
+                          : 'text-white/40 hover:text-red-400 hover:bg-red-400/5'
+                      }`}
                       onClick={handleLike}
                     >
                       <LikeIcon
-                        size={14}
-                        className={hasLiked ? 'text-red-400' : 'text-white/60'}
+                        size={15}
+                        className={`transition-transform duration-200 group-hover:scale-110 ${hasLiked ? 'text-red-400' : ''}`}
                       />
-                      <p className="text-xs">{likeCount}</p>
+                      <span className="text-xs tabular-nums">{likeCount}</span>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10">
                     {hasLiked ? 'Unlike this tweet' : 'Like this tweet'}
                   </TooltipContent>
                 </Tooltip>
-                {/* Admin badge when admin liked a user tweet - different icon */}
+                {/* Admin badge when admin liked a user tweet */}
                 {data.avatar === 'user' && data.likedByAdmin && (
                   <Tooltip>
                     <TooltipTrigger asChild>

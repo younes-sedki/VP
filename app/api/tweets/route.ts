@@ -505,6 +505,7 @@ export async function POST(request: NextRequest) {
     const author = sanitizeInput(body.author || '')
     const handle = sanitizeInput(body.handle || '')
     const email = sanitizeInput(body.email || '')
+    const avatarImage = body.avatarImage && typeof body.avatarImage === 'string' && body.avatarImage.startsWith('data:image/') ? body.avatarImage : null
     const imageUrl = sanitizeImageUrl(body.imageUrl || body.fileUrl || null)
     const fileType = body.fileType || (imageUrl ? 'image' : null)
     const fileName = sanitizeInput(body.fileName || '')
@@ -604,7 +605,7 @@ export async function POST(request: NextRequest) {
       author,
       handle,
       avatar: 'user',
-      avatarImage: '/placeholder-user.jpg',
+      avatarImage: avatarImage || null,
       content,
       image: imageUrl || null,
       created_at: new Date().toISOString(),

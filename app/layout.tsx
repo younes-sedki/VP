@@ -3,6 +3,7 @@ import Script from "next/script"
 import "./globals.css"
 import StructuredData from "./structured-data"
 import { Toaster } from "@/components/ui/toaster"
+import Navbar from "@/components/navbar"
 
 export const metadata: Metadata = {
   title: {
@@ -147,6 +148,7 @@ export default function RootLayout({
       </head>
 
       <body className="bg-neutral-950">
+        <Navbar />
         {children}
         <Toaster />
       </body>

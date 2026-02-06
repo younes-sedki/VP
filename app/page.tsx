@@ -10,7 +10,6 @@ import DotGridShader from "@/components/DotGridShader"
 import AnimatedHeading from "@/components/animated-heading"
 import RevealOnView from "@/components/reveal-on-view"
 import SkillsSection from "@/components/skills-section"
-import NewsletterSection from "@/components/newsletter-section"
 import ContactSection from "@/components/contact-section"
 import TerminalAnimation from "@/components/terminal-animation"
 import ProjectsSection from "@/components/projects-section"
@@ -152,9 +151,6 @@ export default function Page() {
 
       {SHOW_SECTIONS.projects && <ProjectsSection />}
       {SHOW_SECTIONS.skills && <SkillsSection />}
-      
-      <NewsletterSection />
-      
       {SHOW_SECTIONS.contact && <ContactSection />}
     </main>
   )

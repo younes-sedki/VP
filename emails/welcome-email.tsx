@@ -190,9 +190,9 @@ const body: React.CSSProperties = {
 const wrapper: React.CSSProperties = {
   maxWidth: '600px',
   margin: '0 auto',
-  backgroundColor: '#141414',
+  backgroundColor: '#0a0a0a',
   borderRadius: '24px',
-  border: '2px solid rgba(255,255,255,0.12)',
+  border: '2px solid rgba(16,185,129,0.25)',
   overflow: 'hidden',
 }
 
@@ -200,7 +200,7 @@ const wrapper: React.CSSProperties = {
 const heroSection: React.CSSProperties = {
   padding: '48px 40px 40px',
   textAlign: 'center' as const,
-  borderBottom: '1px solid rgba(255,255,255,0.08)',
+  borderBottom: '1px solid rgba(16,185,129,0.15)',
 }
 
 const nameBadge: React.CSSProperties = {
@@ -249,7 +249,7 @@ const paragraph: React.CSSProperties = {
 }
 
 const sectionHeading: React.CSSProperties = {
-  color: '#fafafa',
+  color: '#10b981',
   fontSize: '20px',
   fontWeight: 900,
   letterSpacing: '-0.3px',
@@ -277,14 +277,14 @@ const topicColumnRight: React.CSSProperties = {
 }
 
 const topicCard: React.CSSProperties = {
-  backgroundColor: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.1)',
+  backgroundColor: 'rgba(16,185,129,0.05)',
+  border: '1px solid rgba(16,185,129,0.2)',
   borderRadius: '16px',
   padding: '16px 18px',
 }
 
 const topicTitle: React.CSSProperties = {
-  color: '#fafafa',
+  color: '#34d399',
   fontSize: '13px',
   fontWeight: 700,
   margin: '0 0 6px',
@@ -307,7 +307,7 @@ const ctaSection: React.CSSProperties = {
 const ctaButton: React.CSSProperties = {
   display: 'inline-block',
   padding: '14px 36px',
-  backgroundColor: '#fafafa',
+  backgroundColor: '#10b981',
   color: '#0a0a0a',
   textDecoration: 'none',
   borderRadius: '999px',
@@ -318,7 +318,7 @@ const ctaButton: React.CSSProperties = {
 
 // ─── Divider ─────
 const divider: React.CSSProperties = {
-  borderColor: 'rgba(255,255,255,0.08)',
+  borderColor: 'rgba(16,185,129,0.15)',
   margin: '32px 40px',
 }
 
@@ -336,7 +336,7 @@ const socialLabel: React.CSSProperties = {
 }
 
 const socialLink: React.CSSProperties = {
-  color: '#60a5fa',
+  color: '#34d399',
   textDecoration: 'none',
   fontSize: '13px',
   fontWeight: 500,
@@ -345,8 +345,8 @@ const socialLink: React.CSSProperties = {
 // ─── Footer ─────
 const footer: React.CSSProperties = {
   padding: '28px 40px',
-  borderTop: '1px solid rgba(255,255,255,0.08)',
-  backgroundColor: '#0f0f0f',
+  borderTop: '1px solid rgba(16,185,129,0.15)',
+  backgroundColor: '#050505',
   borderRadius: '0 0 24px 24px',
   textAlign: 'center' as const,
 }
@@ -365,7 +365,7 @@ const footerMuted: React.CSSProperties = {
 }
 
 const footerLink: React.CSSProperties = {
-  color: 'rgba(255,255,255,0.5)',
+  color: '#10b981',
   textDecoration: 'underline',
 }
 

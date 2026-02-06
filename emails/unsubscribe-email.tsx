@@ -86,9 +86,9 @@ const body: React.CSSProperties = {
 const wrapper: React.CSSProperties = {
   maxWidth: '600px',
   margin: '0 auto',
-  backgroundColor: '#141414',
+  backgroundColor: '#0a0a0a',
   borderRadius: '24px',
-  border: '2px solid rgba(255,255,255,0.12)',
+  border: '2px solid rgba(16,185,129,0.25)',
   overflow: 'hidden',
 }
 
@@ -152,7 +152,7 @@ const ctaSection: React.CSSProperties = {
 const ctaButton: React.CSSProperties = {
   display: 'inline-block',
   padding: '14px 36px',
-  backgroundColor: '#fafafa',
+  backgroundColor: '#10b981',
   color: '#0a0a0a',
   textDecoration: 'none',
   borderRadius: '999px',
@@ -164,8 +164,8 @@ const ctaButton: React.CSSProperties = {
 // ─── Footer ────
 const footer: React.CSSProperties = {
   padding: '24px 40px',
-  borderTop: '1px solid rgba(255,255,255,0.08)',
-  backgroundColor: '#0f0f0f',
+  borderTop: '1px solid rgba(16,185,129,0.15)',
+  backgroundColor: '#050505',
   borderRadius: '0 0 24px 24px',
   textAlign: 'center' as const,
 }
@@ -178,6 +178,6 @@ const footerText: React.CSSProperties = {
 }
 
 const footerLink: React.CSSProperties = {
-  color: 'rgba(255,255,255,0.45)',
+  color: '#10b981',
   textDecoration: 'underline',
 }

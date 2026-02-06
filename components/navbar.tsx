@@ -75,11 +75,15 @@ export default function Navbar() {
     coords?.longitude || null
   )
 
-  // Handle scroll behavior
+  // Handle scroll behavior — on mobile, collapse nav links when scrolling down
+  const [scrollingDown, setScrollingDown] = useState(false)
+
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
+      const goingDown = currentScrollY > lastScrollY && currentScrollY > 50
       setIsVisible(currentScrollY < lastScrollY || currentScrollY < 50)
+      setScrollingDown(goingDown)
       setLastScrollY(currentScrollY)
     }
 
@@ -131,7 +135,7 @@ export default function Navbar() {
           {/* Glassmorphism effect */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
 
-          <div className="relative flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-5 py-1.5">
+          <div className="relative flex items-center justify-center gap-2 sm:gap-4 px-3 sm:px-5 py-1.5 transition-all duration-300">
             {/* Left: Brand + Avatar + Clock */}
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               {!isHome ? (
@@ -168,7 +172,7 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* Right: Navigation items inline — always visible */}
+            {/* Right: Navigation items — animate hide/show on mobile scroll */}
             {isBlog ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -189,7 +193,21 @@ export default function Navbar() {
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <div ref={navContainerRef} className="flex items-center gap-0.5 sm:gap-1 relative">
+              <>
+                {/* Divider between brand and nav — animates with nav */}
+                <div
+                  className={`h-3 w-px bg-white/20 flex-shrink-0 transition-all duration-400 ease-[cubic-bezier(0.25,0.1,0.25,1)] sm:opacity-100 ${
+                    scrollingDown ? 'opacity-0 w-0 sm:opacity-100 sm:w-px' : 'opacity-100'
+                  }`}
+                />
+                <div
+                  ref={navContainerRef}
+                  className={`flex items-center gap-0.5 sm:gap-1 relative transition-all duration-400 ease-[cubic-bezier(0.25,0.1,0.25,1)] origin-right ${
+                    scrollingDown
+                      ? 'max-w-0 opacity-0 scale-95 overflow-hidden sm:max-w-none sm:opacity-100 sm:scale-100'
+                      : 'max-w-[500px] opacity-100 scale-100'
+                  }`}
+                >
                 {/* Sliding indicator */}
                 <div
                   className="absolute bottom-0 h-[2px] rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
@@ -214,6 +232,7 @@ export default function Navbar() {
                   </button>
                 ))}
               </div>
+              </>
             )}
           </div>
         </div>

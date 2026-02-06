@@ -37,7 +37,6 @@ export default function Navbar() {
   const navItems = isBlog ? [] : homeNavItems
   const defaultActive = navItems[0]?.id || ''
 
-  const [lastScrollY, setLastScrollY] = useState(0)
   const [activeSection, setActiveSection] = useState(defaultActive)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [isReloading, setIsReloading] = useState(false)

@@ -114,9 +114,9 @@ export default function Navbar() {
     <>
       {/* Main Navbar - Centered */}
       <nav
-        className="fixed top-3 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+        className="fixed top-3 left-0 right-0 z-50 flex justify-center px-4 transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
       >
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/60 backdrop-blur-xl shadow-lg w-fit">
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/60 backdrop-blur-xl shadow-lg w-auto max-w-[calc(100vw-2rem)]">
           {/* Glassmorphism effect */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
 

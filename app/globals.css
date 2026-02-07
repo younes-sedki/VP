@@ -226,15 +226,20 @@ a[href^="mailto:"]:hover {
   }
 }
 
-/* Prevent any element from exceeding viewport width on mobile */
+/* Prevent horizontal overflow on mobile */
 @media screen and (max-width: 768px) {
-  * {
-    max-width: 100vw;
+  html {
+    overflow-x: hidden;
   }
   
-  html, body {
+  body {
     overflow-x: hidden;
     width: 100%;
-    position: relative;
+    min-width: 0;
+  }
+  
+  /* Prevent main content from exceeding viewport */
+  main, section, article, div:not([class*="fixed"]):not([class*="absolute"]) {
+    max-width: 100vw;
   }
 }

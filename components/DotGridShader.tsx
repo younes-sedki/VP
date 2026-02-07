@@ -6,16 +6,45 @@ import { ErrorBoundary } from "@/components/error-boundary"
 
 type DotGridShaderProps = React.ComponentProps<typeof DotGrid>
 
+// Detect if running as PWA/standalone app
+function isStandaloneMode(): boolean {
+  if (typeof window === 'undefined') return false
+  
+  // Check iOS standalone mode
+  const isIOSStandalone = 'standalone' in window.navigator && (window.navigator as { standalone?: boolean }).standalone === true
+  
+  // Check display-mode for Android PWA and other browsers
+  const isDisplayModeStandalone = window.matchMedia?.('(display-mode: standalone)')?.matches
+  
+  return isIOSStandalone || isDisplayModeStandalone
+}
+
+// Detect iOS browser (not PWA - PWA has better WebGL support)
+function isIOSBrowser(): boolean {
+  if (typeof window === 'undefined') return false
+  
+  const ua = navigator.userAgent
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (ua.includes('Mac') && 'ontouchend' in document)
+  
+  // If iOS but running as PWA, WebGL works fine
+  if (isIOS && isStandaloneMode()) return false
+  
+  return isIOS
+}
+
 // Detect mobile/tablet devices
 function isMobileDevice(): boolean {
   if (typeof window === 'undefined') return false
+  
+  // iOS browser crashes on zoom - always disable WebGL
+  if (isIOSBrowser()) return true
   
   // Check for touch capability + small screen (more reliable than user agent)
   const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
   const isSmallScreen = window.innerWidth < 1024
   
   // Also check user agent for tablets that might have larger screens
-  const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+  const mobileRegex = /Android|webOS|BlackBerry|IEMobile|Opera Mini/i
   const isMobileUA = mobileRegex.test(navigator.userAgent)
   
   return (hasTouch && isSmallScreen) || isMobileUA
@@ -32,15 +61,17 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T 
 
 function DotGridShaderInner(props: DotGridShaderProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [disabled, setDisabled] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  // Start disabled to prevent any WebGL render before mobile check
+  const [disabled, setDisabled] = useState(true)
+  const [isMobile, setIsMobile] = useState(true)
 
   // Check if mobile on mount - disable WebGL entirely on mobile to prevent crashes
   useEffect(() => {
     const mobile = isMobileDevice()
     setIsMobile(mobile)
-    if (mobile) {
-      setDisabled(true)
+    // Only enable WebGL on non-mobile after check
+    if (!mobile) {
+      setDisabled(false)
     }
   }, [])
 

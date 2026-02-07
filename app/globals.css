@@ -205,6 +205,11 @@ a[href^="mailto:"]:hover {
   }
 }
 
+/* Utility class for hiding scrollbars */
+@utility no-scrollbar {
+  @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+}
+
 /* Hide scrollbars on mobile while keeping scroll enabled */
 @media (max-width: 768px) {
   body {

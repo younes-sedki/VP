@@ -1,19 +1,54 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { DotGrid } from "@paper-design/shaders-react"
 import { ErrorBoundary } from "@/components/error-boundary"
 
 type DotGridShaderProps = React.ComponentProps<typeof DotGrid>
 
+// Detect mobile/tablet devices
+function isMobileDevice(): boolean {
+  if (typeof window === 'undefined') return false
+  
+  // Check for touch capability + small screen (more reliable than user agent)
+  const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  const isSmallScreen = window.innerWidth < 1024
+  
+  // Also check user agent for tablets that might have larger screens
+  const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+  const isMobileUA = mobileRegex.test(navigator.userAgent)
+  
+  return (hasTouch && isSmallScreen) || isMobileUA
+}
+
+// Simple debounce function
+function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  return ((...args: unknown[]) => {
+    if (timeoutId) clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => fn(...args), ms)
+  }) as T
+}
+
 function DotGridShaderInner(props: DotGridShaderProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [disabled, setDisabled] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
+  // Check if mobile on mount - disable WebGL entirely on mobile to prevent crashes
   useEffect(() => {
-    // Disable shader if device pixel ratio * container size would exceed
-    // common max WebGL texture sizes (e.g. when browser is zoomed in)
-    const check = () => {
+    const mobile = isMobileDevice()
+    setIsMobile(mobile)
+    if (mobile) {
+      setDisabled(true)
+    }
+  }, [])
+
+  // Debounced check function for desktop only
+  const checkSize = useCallback(
+    debounce(() => {
+      if (isMobile) return // Skip checks on mobile, already disabled
+      
       const el = containerRef.current
       if (!el) return
 
@@ -21,24 +56,29 @@ function DotGridShaderInner(props: DotGridShaderProps) {
       const w = el.offsetWidth * dpr
       const h = el.offsetHeight * dpr
 
-      // Most GPUs support at least 4096; many support 8192+.
-      // Disable if either dimension would exceed 8192 physical pixels.
-      if (w > 8192 || h > 8192) {
+      // Disable if dimension exceeds safe WebGL texture size
+      // Use 4096 as safer limit for compatibility
+      if (w > 4096 || h > 4096 || dpr > 2) {
         setDisabled(true)
       } else {
         setDisabled(false)
       }
-    }
+    }, 250), // 250ms debounce
+    [isMobile]
+  )
 
-    check()
-
-    // Re-check on resize / zoom changes (zoom triggers resize events)
-    window.addEventListener("resize", check)
-    return () => window.removeEventListener("resize", check)
-  }, [])
-
-  // Listen for WebGL context lost on any canvas inside our container
   useEffect(() => {
+    if (isMobile) return // Skip resize listener on mobile
+    
+    checkSize()
+    window.addEventListener("resize", checkSize)
+    return () => window.removeEventListener("resize", checkSize)
+  }, [checkSize, isMobile])
+
+  // Listen for WebGL context lost
+  useEffect(() => {
+    if (isMobile) return // Skip on mobile
+    
     const el = containerRef.current
     if (!el) return
 
@@ -47,11 +87,10 @@ function DotGridShaderInner(props: DotGridShaderProps) {
       setDisabled(true)
     }
 
-    // The shader library creates a canvas; listen on container for bubbled events
     el.addEventListener("webglcontextlost", handleContextLost, true)
     return () =>
       el.removeEventListener("webglcontextlost", handleContextLost, true)
-  }, [])
+  }, [isMobile])
 
   return (
     <div

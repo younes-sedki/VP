@@ -21,7 +21,7 @@ import { SHOW_SECTIONS } from '@/lib/sections-config'
 
 export default function Page() {
   return (
-    <main className="bg-neutral-950 text-white" id="main-content">
+    <main className="bg-neutral-950 text-white overflow-x-hidden" id="main-content">
       {/* Skip to content link for accessibility */}
       <a href="#main-content" className="skip-to-content">
         Skip to main content
@@ -29,7 +29,7 @@ export default function Page() {
       
       {/* HERO: full-viewport section */}
       <section className="px-4 pt-4 pb-8 lg:pb-4" aria-label="Hero section">
-        <div className="grid h-full grid-cols-1 gap-4 lg:grid-cols-[420px_1fr]">
+        <div className="grid h-full grid-cols-1 gap-4 lg:grid-cols-[420px_1fr] min-w-0">
           {/* LEFT: sticky and full height */}
           <aside className="lg:sticky lg:top-4 lg:h-[calc(100svh-2rem)]">
             <RevealOnView

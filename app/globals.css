@@ -121,11 +121,14 @@
   html {
     scroll-behavior: smooth;
     background-color: #030712; /* neutral-950 */
+    overflow-x: hidden; /* Prevent horizontal scroll on zoom */
   }
   
   body {
     @apply bg-background text-foreground;
     background-color: #030712; /* neutral-950 fallback */
+    overflow-x: hidden; /* Prevent horizontal scroll on zoom */
+    min-width: 0; /* Prevent grid/flex blowout on zoom */
   }
   
   /* iOS Safari safe area handling */

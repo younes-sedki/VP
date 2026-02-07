@@ -4,6 +4,7 @@ import "./globals.css"
 import StructuredData from "./structured-data"
 import { Toaster } from "@/components/ui/toaster"
 import Navbar from "@/components/navbar"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 export const metadata: Metadata = {
   title: {
@@ -147,9 +148,11 @@ export default function RootLayout({
         `}</style>
       </head>
 
-      <body className="bg-neutral-950">
-        <Navbar />
-        {children}
+      <body className="bg-neutral-950 overflow-x-hidden">
+        <ErrorBoundary>
+          <Navbar />
+          {children}
+        </ErrorBoundary>
         <Toaster />
       </body>
     </html>

@@ -190,67 +190,61 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                {/* Divider between brand and nav — hidden on mobile when collapsed */}
-                <div
-                  className={`h-3 bg-white/20 flex-shrink-0 transition-all ease-[cubic-bezier(0.25,0.1,0.25,1)] ${
-                    navCollapsed ? 'w-0 sm:w-px' : 'w-px'
-                  }`}
-                />
-                {/* Nav items container — completely hidden on mobile when collapsed */}
+                {/* Mobile: Show expand arrow OR nav items (not both taking space) */}
+                {/* Desktop: Always show divider and nav items */}
+                
+                {/* Divider - only show on desktop, or on mobile when expanded */}
+                {(!navCollapsed || typeof window === 'undefined') && (
+                  <div className="hidden sm:block h-3 w-px bg-white/20 flex-shrink-0" />
+                )}
+                {!navCollapsed && (
+                  <div className="sm:hidden h-3 w-px bg-white/20 flex-shrink-0" />
+                )}
+                
+                {/* Nav items - always visible on desktop, toggle on mobile */}
                 <div
                   ref={navContainerRef}
-                  className={`flex items-center gap-0.5 sm:gap-1 relative transition-all ease-[cubic-bezier(0.25,0.1,0.25,1)] ${
-                    navCollapsed
-                      ? 'hidden sm:flex'
-                      : 'flex'
+                  className={`items-center gap-0.5 sm:gap-1 relative sm:flex ${
+                    navCollapsed ? 'hidden' : 'flex'
                   }`}
                 >
-                {/* Sliding indicator */}
-                <div
-                  className="absolute bottom-0 h-[2px] rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
-                  style={{
-                    left: indicator.left,
-                    width: indicator.width,
-                    opacity: indicator.width > 0 ? 1 : 0,
-                  }}
-                />
-                {navItems.map((item) => (
-                  <button
-                    key={item.id}
-                    ref={(el) => setNavItemRef(item.id, el)}
-                    onClick={() => handleNavClick(item.id)}
-                    className={`relative px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium transition-colors duration-200 whitespace-nowrap ${
-                      activeSection === item.id
-                        ? 'text-white'
-                        : 'text-white/50 hover:text-white/80'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
+                  {/* Sliding indicator */}
+                  <div
+                    className="absolute bottom-0 h-[2px] rounded-full bg-white transition-all duration-300"
+                    style={{
+                      left: indicator.left,
+                      width: indicator.width,
+                      opacity: indicator.width > 0 ? 1 : 0,
+                    }}
+                  />
+                  {navItems.map((item) => (
+                    <button
+                      key={item.id}
+                      ref={(el) => setNavItemRef(item.id, el)}
+                      onClick={() => handleNavClick(item.id)}
+                      className={`relative px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
+                        activeSection === item.id
+                          ? 'text-white'
+                          : 'text-white/50 hover:text-white/80'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
 
-                {/* Arrow to expand nav — visible only when collapsed on mobile */}
-                {navCollapsed && (
-                  <button
-                    onClick={() => setNavExpanded(true)}
-                    className="sm:hidden p-1 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
-                    aria-label="Show navigation"
-                  >
+                {/* Mobile expand/collapse toggle */}
+                <button
+                  onClick={() => setNavExpanded(!navExpanded)}
+                  className="sm:hidden p-1 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
+                  aria-label={navCollapsed ? 'Show navigation' : 'Hide navigation'}
+                >
+                  {navCollapsed ? (
                     <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                )}
-
-                {/* Arrow to collapse nav — visible only when expanded on mobile */}
-                {!navCollapsed && (
-                  <button
-                    onClick={() => setNavExpanded(false)}
-                    className="sm:hidden p-1 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
-                    aria-label="Hide navigation"
-                  >
+                  ) : (
                     <ChevronLeft className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                  )}
+                </button>
               </>
             )}
           </div>

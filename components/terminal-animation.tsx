@@ -94,8 +94,8 @@ export default function TerminalAnimation() {
         <span className="ml-2 text-xs text-white/50">younes@dev ~ terminal</span>
       </div>
 
-      {/* Terminal content - only text animates */}
-      <div className="flex-1 overflow-y-auto p-4">
+      {/* Terminal content - no scroll, content fits */}
+      <div className="flex-1 overflow-hidden p-4">
         <div className="space-y-1">
           {/* Completed lines */}
           {terminalLines.slice(0, visibleLines).map((line, index) => (

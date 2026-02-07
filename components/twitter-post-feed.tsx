@@ -360,10 +360,10 @@ export default function TwitterPostFeed({
         />
       )}
       <div
-        className={`px-4 py-4 ${isDetailPage ? '' : 'border-b border-white/[0.06]'} transition-colors duration-200 ${isDetailPage ? '' : 'hover:bg-white/[0.02] cursor-pointer'}`}
+        className={`px-3 sm:px-4 py-3 sm:py-4 ${isDetailPage ? '' : 'border-b border-white/[0.06]'} transition-colors duration-200 ${isDetailPage ? '' : 'hover:bg-white/[0.02] cursor-pointer'}`}
         onClick={goToPost}
       >
-        <div className="flex items-start gap-3 relative">
+        <div className="flex items-start gap-2.5 sm:gap-3 relative">
           <div className="flex-shrink-0 mt-0.5">
             <TwitterAvatar
               username={data.handle || data.author}
@@ -373,12 +373,12 @@ export default function TwitterPostFeed({
             />
           </div>
           <div className="flex flex-col flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-1">
                     <h5
-                      className="text-white text-[13px] font-semibold cursor-pointer hover:underline decoration-white/30 transition-colors"
+                      className="text-white text-[13px] sm:text-[14px] font-semibold cursor-pointer hover:underline decoration-white/30 transition-colors"
                       onClick={(e) => {
                         e.stopPropagation()
                         if (data.avatar === 'admin') {
@@ -403,7 +403,7 @@ export default function TwitterPostFeed({
                 </TooltipContent>
               </Tooltip>
               <span
-                className="text-white/40 text-xs cursor-pointer hover:underline decoration-white/20"
+                className="text-white/40 text-[11px] sm:text-xs cursor-pointer hover:underline decoration-white/20 hidden sm:inline"
                 onClick={(e) => {
                   e.stopPropagation()
                   if (data.avatar === 'admin') {
@@ -414,7 +414,7 @@ export default function TwitterPostFeed({
                 @{data.handle || data.author}
               </span>
               <span className="text-white/20 text-xs">·</span>
-              <span className="text-white/40 text-xs">{createdAt}</span>
+              <span className="text-white/40 text-[11px] sm:text-xs">{createdAt}</span>
               {data.edited && (
                 <>
                   <span className="text-white/20 text-xs">·</span>
@@ -423,39 +423,46 @@ export default function TwitterPostFeed({
               )}
             </div>
 
-            <div className="text-white/90 text-[13px] mt-1 leading-[1.55] whitespace-pre-wrap">
+            <div className="text-white/90 text-[13px] sm:text-[14px] mt-1.5 sm:mt-1 leading-[1.5] sm:leading-[1.55] whitespace-pre-wrap break-words">
               <RichTextContent content={data.content} />
             </div>
 
             {/* Latest admin reply preview (if any) */}
             {latestAdminReply && (
-              <div className="mt-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5">
-                <div className="flex items-start gap-2.5">
-                  <TwitterAvatar
-                    username={ADMIN_HANDLE}
-                    avatar="admin"
-                    avatarImage={null}
-                    size="small"
-                  />
+              <div className="mt-2.5 sm:mt-3 rounded-lg sm:rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] px-3 sm:px-3.5 py-2 sm:py-2.5">
+                <div className="flex items-start gap-2 sm:gap-2.5">
+                  <div className="flex-shrink-0 hidden sm:block">
+                    <TwitterAvatar
+                      username={ADMIN_HANDLE}
+                      avatar="admin"
+                      avatarImage={null}
+                      size="small"
+                    />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[12px] font-semibold text-white">
+                    <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+                      <div className="flex items-center gap-1 sm:hidden">
+                        <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                          <BadgeCheck className="w-2.5 h-2.5 text-emerald-400 fill-emerald-400" />
+                        </div>
+                      </div>
+                      <span className="text-[11px] sm:text-[12px] font-semibold text-white">
                         {ADMIN_DISPLAY_NAME}
                       </span>
                       <BadgeCheck 
-                        className="w-3 h-3 text-emerald-400 fill-emerald-400 flex-shrink-0" 
+                        className="w-3 h-3 text-emerald-400 fill-emerald-400 flex-shrink-0 hidden sm:block" 
                         aria-label="Verified admin"
                       />
-                      <span className="text-[11px] text-white/30">
+                      <span className="text-[10px] sm:text-[11px] text-white/30 hidden sm:inline">
                         @{ADMIN_HANDLE}
                       </span>
                       {latestAdminReply.timestamp && (
-                        <span className="text-white/20 text-[10px]">
+                        <span className="text-white/20 text-[9px] sm:text-[10px]">
                           · {formatDistanceToNowStrict(new Date(latestAdminReply.timestamp))}
                         </span>
                       )}
                     </div>
-                    <div className="mt-0.5 text-[12px] text-white/70 whitespace-pre-wrap leading-relaxed">
+                    <div className="mt-0.5 sm:mt-1 text-[11px] sm:text-[12px] text-white/70 whitespace-pre-wrap leading-relaxed break-words">
                       {latestAdminReply.content}
                     </div>
                   </div>
@@ -561,15 +568,15 @@ export default function TwitterPostFeed({
                 )}
               </div>
             )}
-            <div className="flex items-center gap-5 mt-2.5 -ml-1">
+            <div className="flex items-center gap-3 sm:gap-5 mt-2.5 sm:mt-3 -ml-1">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div
-                    className="flex items-center gap-1.5 text-white/40 cursor-pointer transition-colors duration-200 hover:text-emerald-400 group rounded-full px-2 py-1 -mx-2 -my-1 hover:bg-emerald-400/5"
+                    className="flex items-center gap-1 sm:gap-1.5 text-white/40 cursor-pointer transition-colors duration-200 hover:text-emerald-400 group rounded-full px-2.5 sm:px-2 py-1.5 sm:py-1 -mx-2 -my-1 hover:bg-emerald-400/5 active:bg-emerald-400/10"
                     onClick={handleShare}
                   >
-                    <RiShareLine size={15} className="transition-transform duration-200 group-hover:scale-110" />
-                    <span className="text-xs">Share</span>
+                    <RiShareLine size={16} className="sm:w-[15px] sm:h-[15px] transition-transform duration-200 group-hover:scale-110" />
+                    <span className="text-[11px] sm:text-xs">Share</span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10">
@@ -577,22 +584,22 @@ export default function TwitterPostFeed({
                 </TooltipContent>
               </Tooltip>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 sm:gap-1.5">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
-                      className={`flex items-center gap-1.5 cursor-pointer transition-colors duration-200 group rounded-full px-2 py-1 -mx-2 -my-1 ${
+                      className={`flex items-center gap-1 sm:gap-1.5 cursor-pointer transition-colors duration-200 group rounded-full px-2.5 sm:px-2 py-1.5 sm:py-1 -mx-2 -my-1 active:scale-95 ${
                         hasLiked 
-                          ? 'text-red-400 hover:bg-red-400/5' 
-                          : 'text-white/40 hover:text-red-400 hover:bg-red-400/5'
+                          ? 'text-red-400 hover:bg-red-400/5 active:bg-red-400/10' 
+                          : 'text-white/40 hover:text-red-400 hover:bg-red-400/5 active:bg-red-400/10'
                       }`}
                       onClick={handleLike}
                     >
                       <LikeIcon
-                        size={15}
-                        className={`transition-transform duration-200 group-hover:scale-110 ${hasLiked ? 'text-red-400' : ''}`}
+                        size={16}
+                        className={`sm:w-[15px] sm:h-[15px] transition-transform duration-200 group-hover:scale-110 ${hasLiked ? 'text-red-400' : ''}`}
                       />
-                      <span className="text-xs tabular-nums">{likeCount}</span>
+                      <span className="text-[11px] sm:text-xs tabular-nums">{likeCount}</span>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="bg-neutral-800 text-white border border-white/10">

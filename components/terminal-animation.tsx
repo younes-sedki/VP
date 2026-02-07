@@ -83,7 +83,7 @@ export default function TerminalAnimation() {
   }, [mounted, animateStep])
 
   return (
-    <div className="flex h-full min-h-[400px] flex-col overflow-hidden rounded-2xl border-2 border-white/20 bg-neutral-900/80 font-mono text-sm shadow-2xl backdrop-blur-sm">
+    <div className="flex h-full min-h-[400px] flex-col overflow-hidden rounded-2xl border-2 border-white/20 bg-neutral-900/80 font-mono text-sm shadow-2xl backdrop-blur-sm" style={{ touchAction: 'pan-y' }}>
       {/* Terminal header - fixed */}
       <div className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-neutral-800/50 px-4 py-3">
         <div className="flex gap-1.5">

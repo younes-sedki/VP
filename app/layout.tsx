@@ -148,7 +148,7 @@ export default function RootLayout({
         `}</style>
       </head>
 
-      <body className="bg-neutral-950 overflow-x-hidden">
+      <body className="bg-neutral-950">
         <ErrorBoundary>
           <Navbar />
           {children}

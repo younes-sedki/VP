@@ -60,6 +60,8 @@ function DotGridShaderInner(props: DotGridShaderProps) {
         width: "100%",
         height: "100%",
         backgroundColor: "#000000",
+        touchAction: "pan-y",
+        pointerEvents: "none",
       }}
     >
       {!disabled && (

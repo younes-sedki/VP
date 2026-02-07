@@ -21,7 +21,7 @@ import { SHOW_SECTIONS } from '@/lib/sections-config'
 
 export default function Page() {
   return (
-    <main className="bg-neutral-950 text-white overflow-x-hidden max-w-[100vw]" id="main-content">
+    <main className="bg-neutral-950 text-white" id="main-content">
       {/* Skip to content link for accessibility */}
       <a href="#main-content" className="skip-to-content">
         Skip to main content
@@ -134,7 +134,7 @@ export default function Page() {
           </aside>
 
           {/* Terminal container with reduced height on mobile to prevent page push-down */}
-          <div className="h-[350px] sm:h-[450px] lg:sticky lg:top-4 lg:h-[calc(100svh-2rem)]">
+          <div className="h-[350px] sm:h-[450px] lg:sticky lg:top-4 lg:h-[calc(100svh-2rem)]" style={{ touchAction: 'pan-y' }}>
             <RevealOnView as="div" intensity="hero" delay={0.2} className="h-full">
               <TerminalAnimation />
             </RevealOnView>

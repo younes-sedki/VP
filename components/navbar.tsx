@@ -190,42 +190,23 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                {/* Mobile: Show expand arrow OR nav items (not both taking space) */}
-                {/* Desktop: Always show divider and nav items */}
-                
-                {/* Divider - only show on desktop, or on mobile when expanded */}
-                {(!navCollapsed || typeof window === 'undefined') && (
-                  <div className="hidden sm:block h-3 w-px bg-white/20 flex-shrink-0" />
-                )}
-                {!navCollapsed && (
-                  <div className="sm:hidden h-3 w-px bg-white/20 flex-shrink-0" />
-                )}
-                
-                {/* Nav items - always visible on desktop, toggle on mobile */}
+                {/* Desktop: always show divider + nav */}
+                <div className="hidden sm:block h-3 w-px bg-white/20" />
                 <div
                   ref={navContainerRef}
-                  className={`items-center gap-0.5 sm:gap-1 relative sm:flex ${
-                    navCollapsed ? 'hidden' : 'flex'
-                  }`}
+                  className="hidden sm:flex items-center gap-1 relative"
                 >
-                  {/* Sliding indicator */}
                   <div
                     className="absolute bottom-0 h-[2px] rounded-full bg-white transition-all duration-300"
-                    style={{
-                      left: indicator.left,
-                      width: indicator.width,
-                      opacity: indicator.width > 0 ? 1 : 0,
-                    }}
+                    style={{ left: indicator.left, width: indicator.width, opacity: indicator.width > 0 ? 1 : 0 }}
                   />
                   {navItems.map((item) => (
                     <button
                       key={item.id}
                       ref={(el) => setNavItemRef(item.id, el)}
                       onClick={() => handleNavClick(item.id)}
-                      className={`relative px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium transition-colors whitespace-nowrap ${
-                        activeSection === item.id
-                          ? 'text-white'
-                          : 'text-white/50 hover:text-white/80'
+                      className={`relative px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap ${
+                        activeSection === item.id ? 'text-white' : 'text-white/50 hover:text-white/80'
                       }`}
                     >
                       {item.label}
@@ -233,18 +214,34 @@ export default function Navbar() {
                   ))}
                 </div>
 
-                {/* Mobile expand/collapse toggle */}
+                {/* Mobile: toggle button + conditional nav */}
                 <button
                   onClick={() => setNavExpanded(!navExpanded)}
-                  className="sm:hidden p-1 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
+                  className="sm:hidden p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white"
                   aria-label={navCollapsed ? 'Show navigation' : 'Hide navigation'}
                 >
-                  {navCollapsed ? (
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  ) : (
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  )}
+                  {navCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
                 </button>
+                
+                {/* Mobile nav items - only when expanded */}
+                {!navCollapsed && (
+                  <>
+                    <div className="sm:hidden h-3 w-px bg-white/20" />
+                    <div className="sm:hidden flex items-center gap-0.5">
+                      {navItems.map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => handleNavClick(item.id)}
+                          className={`px-2 py-1.5 text-[10px] font-medium whitespace-nowrap ${
+                            activeSection === item.id ? 'text-white' : 'text-white/50'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>

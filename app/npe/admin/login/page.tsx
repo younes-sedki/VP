@@ -14,6 +14,11 @@ import {
   Send,
   FileText,
   FileImage,
+  Search,
+  Users,
+  MessageSquare,
+  Heart,
+  TrendingUp,
 } from "lucide-react"
 import { RiHeart3Line, RiHeart3Fill } from "react-icons/ri"
 import { Button } from "@/components/ui/button"
@@ -109,6 +114,8 @@ export default function AdminLoginPage() {
   const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [likingTweetId, setLikingTweetId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeTab, setActiveTab] = useState<'admin' | 'user'>('user')
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -116,6 +123,40 @@ export default function AdminLoginPage() {
     () => TWEET_CONFIG.MAX_LENGTH - content.length,
     [content.length]
   )
+
+  // Stats calculations
+  const stats = useMemo(() => {
+    const totalLikes = userTweets.reduce((sum, t) => sum + ((t as any).likes || 0), 0)
+    const adminLikedCount = userTweets.filter((t) => (t as any).likedByAdmin).length
+    return {
+      totalTweets: tweets.length + userTweets.length,
+      adminTweets: tweets.length,
+      userTweets: userTweets.length,
+      totalLikes,
+      adminLikedCount,
+    }
+  }, [tweets, userTweets])
+
+  // Filtered tweets based on search
+  const filteredAdminTweets = useMemo(() => {
+    if (!searchQuery.trim()) return tweets
+    const q = searchQuery.toLowerCase()
+    return tweets.filter((t) =>
+      t.content.toLowerCase().includes(q) ||
+      t.author.toLowerCase().includes(q) ||
+      t.handle.toLowerCase().includes(q)
+    )
+  }, [tweets, searchQuery])
+
+  const filteredUserTweets = useMemo(() => {
+    if (!searchQuery.trim()) return userTweets
+    const q = searchQuery.toLowerCase()
+    return userTweets.filter((t) =>
+      t.content.toLowerCase().includes(q) ||
+      t.author.toLowerCase().includes(q) ||
+      t.handle.toLowerCase().includes(q)
+    )
+  }, [userTweets, searchQuery])
 
   const fetchAdminTweets = useCallback(async () => {
     const res = await fetch('/api/tweets?limit=50&offset=0', { cache: 'no-store' })
@@ -543,6 +584,58 @@ export default function AdminLoginPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+        {/* Stats Dashboard */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-neutral-900/60 border border-white/10 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-white/50 mb-1">
+              <MessageSquare className="w-4 h-4" />
+              <span className="text-xs">Total Posts</span>
+            </div>
+            <div className="text-2xl font-bold text-white">{stats.totalTweets}</div>
+          </div>
+          <div className="bg-neutral-900/60 border border-white/10 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-white/50 mb-1">
+              <Users className="w-4 h-4" />
+              <span className="text-xs">User Posts</span>
+            </div>
+            <div className="text-2xl font-bold text-blue-400">{stats.userTweets}</div>
+          </div>
+          <div className="bg-neutral-900/60 border border-white/10 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-white/50 mb-1">
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-xs">Admin Posts</span>
+            </div>
+            <div className="text-2xl font-bold text-emerald-400">{stats.adminTweets}</div>
+          </div>
+          <div className="bg-neutral-900/60 border border-white/10 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-white/50 mb-1">
+              <Heart className="w-4 h-4" />
+              <span className="text-xs">Total Likes</span>
+            </div>
+            <div className="text-2xl font-bold text-red-400">{stats.totalLikes}</div>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+          <Input
+            type="text"
+            placeholder="Search posts by content, author, or handle..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-neutral-900/60 border-white/10 text-white placeholder:text-white/40 rounded-xl focus-visible:ring-emerald-500/40 focus-visible:border-emerald-500/50"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white text-xs"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
         {/* Composer */}
         <div className="bg-gradient-to-b from-neutral-900/90 via-neutral-950 to-black border border-emerald-500/25 rounded-2xl p-4 shadow-lg shadow-emerald-500/15">
           <div className="flex items-center justify-between gap-3 mb-3">
@@ -699,10 +792,29 @@ export default function AdminLoginPage() {
           )}
         </div>
 
-        {/* Admin tweets list */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white/90">Latest admin tweets</h2>
+        {/* Tabs */}
+        <div className="flex items-center gap-2 border-b border-white/10 pb-3">
+          <button
+            onClick={() => setActiveTab('user')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              activeTab === 'user'
+                ? 'bg-blue-500/15 text-blue-400 border-b-2 border-blue-500'
+                : 'text-white/50 hover:text-white/80'
+            }`}
+          >
+            User Posts ({filteredUserTweets.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('admin')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              activeTab === 'admin'
+                ? 'bg-emerald-500/15 text-emerald-400 border-b-2 border-emerald-500'
+                : 'text-white/50 hover:text-white/80'
+            }`}
+          >
+            Admin Posts ({filteredAdminTweets.length})
+          </button>
+          <div className="ml-auto">
             <Button
               size="sm"
               variant="ghost"
@@ -712,12 +824,22 @@ export default function AdminLoginPage() {
               Refresh
             </Button>
           </div>
+        </div>
 
-          {tweets.length === 0 ? (
-            <div className="text-white/60 text-sm">No admin tweets yet.</div>
+        {/* Admin tweets list */}
+        {activeTab === 'admin' && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-white/90">
+              {searchQuery ? `Search results (${filteredAdminTweets.length})` : 'Latest admin tweets'}
+            </h2>
+          </div>
+
+          {filteredAdminTweets.length === 0 ? (
+            <div className="text-white/60 text-sm">{searchQuery ? 'No matching admin tweets.' : 'No admin tweets yet.'}</div>
           ) : (
             <div className="divide-y divide-white/10 rounded-2xl border border-white/10 overflow-hidden bg-neutral-950/60">
-              {tweets.slice(0, 10).map((t, idx) => (
+              {filteredAdminTweets.slice(0, 10).map((t, idx) => (
                 <div
                   key={t.id}
                   className={`p-4 ${
@@ -760,18 +882,22 @@ export default function AdminLoginPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* User tweets for admin replies */}
+        {activeTab === 'user' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white/90">User tweets</h2>
+            <h2 className="text-sm font-semibold text-white/90">
+              {searchQuery ? `Search results (${filteredUserTweets.length})` : 'User tweets'}
+            </h2>
           </div>
 
-          {userTweets.length === 0 ? (
-            <div className="text-white/60 text-sm">No user tweets yet.</div>
+          {filteredUserTweets.length === 0 ? (
+            <div className="text-white/60 text-sm">{searchQuery ? 'No matching user tweets.' : 'No user tweets yet.'}</div>
           ) : (
             <div className="space-y-3">
-              {userTweets.slice(0, 15).map((t) => (
+              {filteredUserTweets.slice(0, 15).map((t) => (
                 <div
                   key={t.id}
                   className={`p-4 rounded-xl border ${
@@ -920,6 +1046,7 @@ export default function AdminLoginPage() {
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   )

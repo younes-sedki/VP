@@ -451,7 +451,7 @@ export default function TwitterPostFeed({
                       </span>
                       {latestAdminReply.timestamp && (
                         <span className="text-white/20 text-[10px]">
-                          · {new Date(latestAdminReply.timestamp).toLocaleString()}
+                          · {formatDistanceToNowStrict(new Date(latestAdminReply.timestamp))}
                         </span>
                       )}
                     </div>

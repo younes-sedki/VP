@@ -21,14 +21,14 @@ import { SHOW_SECTIONS } from '@/lib/sections-config'
 
 export default function Page() {
   return (
-    <main className="bg-neutral-950 text-white overflow-x-hidden" id="main-content">
+    <main className="bg-neutral-950 text-white overflow-x-hidden max-w-[100vw]" id="main-content">
       {/* Skip to content link for accessibility */}
       <a href="#main-content" className="skip-to-content">
         Skip to main content
       </a>
       
       {/* HERO: full-viewport section */}
-      <section className="px-4 pt-4 pb-8 lg:pb-4" aria-label="Hero section">
+      <section className="px-4 pt-2 pb-4 sm:pt-4 sm:pb-8 lg:pb-4" aria-label="Hero section">
         <div className="grid h-full grid-cols-1 gap-4 lg:grid-cols-[420px_1fr] min-w-0">
           {/* LEFT: sticky and full height */}
           <aside className="lg:sticky lg:top-4 lg:h-[calc(100svh-2rem)]">
@@ -133,8 +133,8 @@ export default function Page() {
             </RevealOnView>
           </aside>
 
-          {/* Terminal container with fixed height on mobile to prevent layout shifts */}
-          <div className="h-[600px] lg:sticky lg:top-4 lg:h-[calc(100svh-2rem)]">
+          {/* Terminal container with reduced height on mobile to prevent page push-down */}
+          <div className="h-[350px] sm:h-[450px] lg:sticky lg:top-4 lg:h-[calc(100svh-2rem)]">
             <RevealOnView as="div" intensity="hero" delay={0.2} className="h-full">
               <TerminalAnimation />
             </RevealOnView>

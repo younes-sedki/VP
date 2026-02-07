@@ -123,7 +123,7 @@ export default function NewsletterSection() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="flex-1 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-white/25 focus:ring-0 focus:outline-none transition-colors text-sm h-11 px-4"
+                      className="flex-1 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-white/25 focus:ring-0 focus:outline-none transition-colors text-base h-11 px-4"
                       aria-label="Email address for newsletter subscription"
                     />
                     <Button

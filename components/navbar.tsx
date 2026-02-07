@@ -190,18 +190,19 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                {/* Divider between brand and nav — animates with nav */}
+                {/* Divider between brand and nav — hidden on mobile when collapsed */}
                 <div
-                  className={`h-3 w-px bg-white/20 flex-shrink-0 ease-[cubic-bezier(0.25,0.1,0.25,1)] sm:opacity-100 transition-all ${
-                    navCollapsed ? 'duration-300 opacity-0 w-0 sm:opacity-100 sm:w-px' : 'duration-700 opacity-100'
+                  className={`h-3 bg-white/20 flex-shrink-0 transition-all ease-[cubic-bezier(0.25,0.1,0.25,1)] ${
+                    navCollapsed ? 'w-0 sm:w-px' : 'w-px'
                   }`}
                 />
+                {/* Nav items container — completely hidden on mobile when collapsed */}
                 <div
                   ref={navContainerRef}
-                  className={`flex items-center gap-0.5 sm:gap-1 relative ease-[cubic-bezier(0.25,0.1,0.25,1)] origin-right transition-all ${
+                  className={`flex items-center gap-0.5 sm:gap-1 relative transition-all ease-[cubic-bezier(0.25,0.1,0.25,1)] ${
                     navCollapsed
-                      ? 'duration-300 max-w-0 opacity-0 scale-95 overflow-hidden sm:max-w-none sm:opacity-100 sm:scale-100'
-                      : 'duration-700 max-w-[500px] opacity-100 scale-100'
+                      ? 'hidden sm:flex'
+                      : 'flex'
                   }`}
                 >
                 {/* Sliding indicator */}
@@ -229,27 +230,27 @@ export default function Navbar() {
                 ))}
               </div>
 
-                {/* Arrow to expand nav — visible when collapsed */}
-                <button
-                  onClick={() => setNavExpanded(true)}
-                  className={`sm:hidden p-1 rounded-lg hover:bg-white/10 transition-all ease-[cubic-bezier(0.25,0.1,0.25,1)] text-white/50 hover:text-white ${
-                    navCollapsed ? 'duration-300 opacity-100 max-w-8 scale-100' : 'duration-200 opacity-0 max-w-0 scale-75 overflow-hidden pointer-events-none'
-                  }`}
-                  aria-label="Show navigation"
-                >
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+                {/* Arrow to expand nav — visible only when collapsed on mobile */}
+                {navCollapsed && (
+                  <button
+                    onClick={() => setNavExpanded(true)}
+                    className="sm:hidden p-1 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
+                    aria-label="Show navigation"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
 
-                {/* Arrow to collapse nav — visible when expanded on mobile */}
-                <button
-                  onClick={() => setNavExpanded(false)}
-                  className={`sm:hidden p-1 rounded-lg hover:bg-white/10 transition-all ease-[cubic-bezier(0.25,0.1,0.25,1)] text-white/50 hover:text-white ${
-                    !navCollapsed ? 'duration-300 opacity-100 max-w-8 scale-100' : 'duration-200 opacity-0 max-w-0 scale-75 overflow-hidden pointer-events-none'
-                  }`}
-                  aria-label="Hide navigation"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
+                {/* Arrow to collapse nav — visible only when expanded on mobile */}
+                {!navCollapsed && (
+                  <button
+                    onClick={() => setNavExpanded(false)}
+                    className="sm:hidden p-1 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
+                    aria-label="Hide navigation"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </>
             )}
           </div>

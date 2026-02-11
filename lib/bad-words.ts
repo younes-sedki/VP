@@ -141,21 +141,20 @@ export function containsBadWords(content: string): boolean {
   console.log(`[BAD_WORDS_DEBUG] Checking: "${content}" -> "${lowerContent}"`)
   console.log(`[BAD_WORDS_DEBUG] Available words: ${badWords.length}`)
 
-  // Check for bad words (both whole word and substring matches for short words)
+  // Check for bad words.
+  // IMPORTANT: We avoid naive substring checks so names like "Hassan" don't trigger on "ass".
   for (const word of badWords) {
-    // For short words (3 chars or less), check substring matches
-    if (word.length <= 3) {
-      if (lowerContent.includes(word)) {
-        console.log(`[BAD_WORDS_DEBUG] FOUND SHORT WORD: "${word}" in "${lowerContent}"`)
-        return true
-      }
-    } else {
-      // For longer words, use word boundaries for more precise matching
-      const regex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
-      if (regex.test(lowerContent)) {
-        console.log(`[BAD_WORDS_DEBUG] FOUND LONG WORD: "${word}" in "${lowerContent}"`)
-        return true
-      }
+    if (!word) continue
+
+    // Escape regex special chars
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+    // Use word boundaries for all words so we only match real tokens,
+    // not parts of longer names/usernames.
+    const regex = new RegExp(`\\b${escaped}\\b`, 'i')
+    if (regex.test(lowerContent)) {
+      console.log(`[BAD_WORDS_DEBUG] FOUND WORD: "${word}" in "${lowerContent}"`)
+      return true
     }
   }
 

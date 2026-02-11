@@ -532,8 +532,8 @@ export function TweetItem({
             const isCommentFromAdmin = isAdmin(commentObj.author || '')
             
             return (
-            <div key={idx} id={`comment-${idx}`} className="space-y-2">
-              <div className="flex gap-3 p-2 rounded-lg 
+            <div key={idx} id={`comment-${idx}`} className="space-y-1.5">
+              <div className="flex items-start gap-2.5 px-2 py-2 rounded-lg 
                               hover:bg-white/5 transition-all duration-300 ease-out ml-3">
                 {/* Avatar - show admin profile picture if admin, otherwise show user avatar or placeholder */}
                 {isCommentFromAdmin ? (
@@ -560,7 +560,7 @@ export function TweetItem({
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 font-semibold text-white text-sm sm:text-base mb-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-white text-sm sm:text-base mb-0.5">
                     <span className="hover:underline cursor-pointer">{commentObj.author || 'Guest'}</span>
                     {isCommentFromAdmin && (
                       <span title="Verified admin">
@@ -576,52 +576,52 @@ export function TweetItem({
                       </span>
                     )}
                   </div>
-                  <div className="text-white/80 text-sm sm:text-[15px] break-words leading-relaxed">
+                  <div className="text-white/80 text-sm sm:text-[15px] break-words leading-snug">
                     {typeof commentObj === 'string' ? commentObj : commentObj.content}
                   </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  {/* Share button for comments */}
-                  {onShareComment && (
-                    <Button
-                      onClick={() => onShareComment(tweet.id, idx)}
-                      size="sm"
-                      variant="ghost"
-                      className="text-white/40 hover:text-emerald-400 hover:bg-emerald-500/10 flex-shrink-0"
-                      title="Share this reply"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                    </Button>
-                  )}
-                  {/* User reply button for comments */}
-                  {onToggleReplyReply && onReplyInputChange && (
-                    <Button
-                      onClick={() => {
-                        if (replyingToReply?.tweetId === tweet.id && replyingToReply?.commentIndex === idx && replyingToReply?.replyIndex === -1) {
-                          onToggleReplyReply(tweet.id, idx, null)
-                        } else {
-                          onToggleReplyReply(tweet.id, idx, -1) // -1 means replying to the comment itself
-                        }
-                      }}
-                      size="sm"
-                      variant="ghost"
-                      className="text-white/60 hover:text-blue-400 hover:bg-blue-500/10 text-xs"
-                      title="Reply to this comment"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                    </Button>
-                  )}
-                  {/* Admin reply button for comments */}
-                  {isAdminUser && onToggleCommentReply && (
-                    <Button
-                      onClick={() => onToggleCommentReply(tweet.id, idx)}
-                      size="sm"
-                      variant="ghost"
-                      className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 text-xs"
-                    >
-                      Reply
-                    </Button>
-                  )}
+                  <div className="mt-1 flex items-center gap-1.5">
+                    {/* Share button for comments */}
+                    {onShareComment && (
+                      <Button
+                        onClick={() => onShareComment(tweet.id, idx)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-1.5 text-white/40 hover:text-emerald-400 hover:bg-emerald-500/10 flex-shrink-0"
+                        title="Share this reply"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                    {/* User reply button for comments */}
+                    {onToggleReplyReply && onReplyInputChange && (
+                      <Button
+                        onClick={() => {
+                          if (replyingToReply?.tweetId === tweet.id && replyingToReply?.commentIndex === idx && replyingToReply?.replyIndex === -1) {
+                            onToggleReplyReply(tweet.id, idx, null)
+                          } else {
+                            onToggleReplyReply(tweet.id, idx, -1) // -1 means replying to the comment itself
+                          }
+                        }}
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-1.5 text-white/60 hover:text-blue-400 hover:bg-blue-500/10 text-[11px]"
+                        title="Reply to this comment"
+                      >
+                        Reply
+                      </Button>
+                    )}
+                    {/* Admin reply button for comments */}
+                    {isAdminUser && onToggleCommentReply && (
+                      <Button
+                        onClick={() => onToggleCommentReply(tweet.id, idx)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-1.5 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 text-[11px]"
+                      >
+                        Reply (admin)
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
               
@@ -678,11 +678,15 @@ export function TweetItem({
 
               {/* Display nested replies */}
               {commentObj.replies && commentObj.replies.length > 0 && (
-                <div className="ml-11 mt-2 space-y-2 border-l-2 border-white/10 pl-3">
+                <div className="ml-11 mt-1.5 space-y-1.5 border-l-2 border-white/10 pl-3">
                   {commentObj.replies.map((reply: TweetComment, replyIdx: number) => {
                     const isReplyFromAdmin = isAdmin(reply.author || '')
                     return (
-                      <div key={replyIdx} id={`reply-${idx}-${replyIdx}`} className="flex gap-2 p-2 rounded-lg hover:bg-white/5 transition-all duration-300 ease-out">
+                      <div
+                        key={replyIdx}
+                        id={`reply-${idx}-${replyIdx}`}
+                        className="flex items-start gap-2 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all duration-300 ease-out"
+                      >
                         {/* Avatar */}
                         {isReplyFromAdmin ? (
                           <Image
